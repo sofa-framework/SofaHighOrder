@@ -1,0 +1,14 @@
+# CMake package configuration file for the SofaHighOrderTopology plugin
+
+@PACKAGE_INIT@
+
+find_package(SofaFramework REQUIRED)
+find_package(SofaSimulation REQUIRED)
+find_package(SofaMisc REQUIRED)
+
+
+
+check_required_components(SofaHighOrderTopology)
+
+set(SOFAHIGHORDERTOPOLOGY_LIBRARIES SofaHighOrderTopology)
+#set_and_check(SOFAHIGHORDERTOPOLOGY_INCLUDE_DIRS @PACKAGE_SOFAHIGHORDERTOPOLOGY_INCLUDE_DIRS@)

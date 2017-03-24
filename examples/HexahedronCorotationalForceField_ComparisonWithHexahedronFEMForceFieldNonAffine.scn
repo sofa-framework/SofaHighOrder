@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaAdvancedFEM plugin" pluginName="SofaAdvancedFEM" />
+    <VisualStyle displayFlags="showBehaviorModels showForceFields  showVisual" />
+    <Node name="FastHexahedralCorotationalForceField">
+		<GenerateGrid template="Vec3d" name="Grid1" />
+		<BoxROI  template="Vec3d" position="@Grid1.output_position" box="0.9 0.9 0.9 2.1 2.1 2.1" computeOutside="1" name="boxRandom1" />
+		<TransformPosition name="RandomizedCentralPosition1" input_position="@Grid1.output_position" method="random" fixedIndices="@boxRandom1.indicesOutside" maxRandomDisplacement="0.4" />
+        <HexahedronSetTopologyContainer  position="@RandomizedCentralPosition1.output_position" hexahedra="@Grid1.hexahedra" createQuadArray="1"  />
+        <HexahedronSetGeometryAlgorithms  drawEdges="1"/>
+        <MechanicalObject name="dofs" />
+		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-12" threshold="1.0e-12" /> 
+		<StaticSolver  /> 
+		<MeshMatrixMass template="Vec3d" name="mass" lumping="1" printMass="0" massDensity="1"  integrationMethod="analytical" numericalIntegrationMethod="0" integrationOrder="6"/>	
+		<FastHexahedralCorotationalForceField poissonRatio="0.25" youngModulus="1"  integrationMethod="numerical" numericalIntegrationMethod="0" integrationOrder="2" method="linear" /> 
+        <SphereModel radius="0.05" />
+		<BoxROI box="-0.1 -0.1 2.9  3.1 3.1 3.1" drawBoxes="0" name="pressurePlane1"  />
+		<QuadPressureForceField quadList="@pressurePlane1.quadIndices" showForces="1" pressure="0 0 0.4"  />
+		 <FixedPlaneConstraint direction="0 0 1" dmin="-0.1" dmax="0.1" />
+        <FixedConstraint indices="0" /> 
+    </Node>
+	 <Node name="HexahedralFEMForceField">
+	 <GenerateGrid template="Vec3d" name="Grid2" />
+		<BoxROI  template="Vec3d" position="@Grid2.output_position" box="0.9 0.9 0.9 2.1 2.1 2.1" computeOutside="1" name="boxRandom2" />
+		<TransformPosition name="RandomizedCentralPosition2" input_position="@Grid2.output_position" method="random" fixedIndices="@boxRandom2.indicesOutside" maxRandomDisplacement="0.4" />
+        <HexahedronSetTopologyContainer  position="@RandomizedCentralPosition2.output_position" hexahedra="@Grid2.hexahedra" createQuadArray="1"  />
+        <HexahedronSetGeometryAlgorithms  drawColorEdges="0.8 0.2 0.2" drawEdges="1"/>
+        <MechanicalObject name="dofs" />
+		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-12" threshold="1.0e-12" /> 
+		<StaticSolver  /> 
+		<MeshMatrixMass template="Vec3d" name="mass" lumping="1" printMass="0" massDensity="1"  integrationMethod="analytical" numericalIntegrationMethod="0" integrationOrder="6"/>	
+		<HexahedronFEMForceField poissonRatio="0.25" youngModulus="1"  method="small" /> 
+        <SphereModel radius="0.05" />
+		<BoxROI box="-0.1 -0.1 2.9  3.1 3.1 3.1" drawBoxes="0" name="pressurePlane2"  />
+		<QuadPressureForceField quadList="@pressurePlane2.quadIndices" showForces="1" pressure="0 0 0.4"  />
+		 <FixedPlaneConstraint direction="0 0 1" dmin="-0.1" dmax="0.1" />
+        <FixedConstraint indices="0" /> 
+    </Node>
+		<ClipPlane normal="0 0 1"  position="0 0 1.2"/>
+</Node>

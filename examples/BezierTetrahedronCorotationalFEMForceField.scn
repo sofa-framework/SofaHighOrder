@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaAdvancedFEM plugin" pluginName="SofaAdvancedFEM" />
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <Node name="MeshTopology">
+        <TetrahedronSetTopologyContainer name="Container1" fileTopology="mesh/cylinderCoarse.msh" />
+        <TetrahedronSetGeometryAlgorithms name="GeomAlgo" />
+        <MechanicalObject name="dofs" />
+        <Node name="BezierTopology">
+	  	<!--    <EulerImplicit name="cg_odesolver" printLog="false" /> -->
+			<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+			<StaticSolver  /> 
+        	<BezierTetrahedronSetTopologyContainer name="ContainerBezier"/>	
+			<Mesh2BezierTopologicalMapping object1="Container1" object2="ContainerBezier" bezierTetrahedronDegree="4" />
+			<MechanicalObject name="bezierPos" />	
+	
+			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawVolumeEdges="true"/>
+
+        	<MeshMatrixMass template="Vec3d" name="mass" lumping="1" printMass="0" massDensity="1"  integrationMethod="analytical" numericalIntegrationMethod="0" integrationOrder="6"/>	
+			<BoxROI box="-1.2 -1.2 -0.01 1.2 1.2 0.01" drawBoxes="1" name="fixedPlane"  />
+			<FixedConstraint indices="@fixedPlane.indices" />
+			<BoxROI box="-1.2 -1.2 3.99 1.2 1.2 4.01" drawBoxes="0" name="pressurePlane"  />
+			<ConstantForceField points="@pressurePlane.indices" totalForce="0.1.0 -0.4" />
+			<BezierTetrahedralCorotationalFEMForceField poissonRatio="0.45" youngModulus="4"  integrationMethod="analytical" numericalIntegrationMethod="0" integrationOrder="8" method="qr" /> 
+            <SphereModel radius="0.05" />
+        </Node>
+    </Node>
+</Node>

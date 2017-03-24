@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+ <RequiredPlugin name="SofaAdvancedFEM plugin" pluginName="SofaAdvancedFEM" />
+		<GenerateCylinder template="Vec3d" name="Cylinder" radius="0.2" height="1" resHeight="7" resCircumferential="7" resRadial="3" />
+        <TetrahedronSetTopologyContainer name="Container1" tetrahedra="@[-1].tetrahedra" position="@[-1].output_position" createTriangleArray="1"/>
+        <TetrahedronSetGeometryAlgorithms  drawEdges="1"/>
+		<CGLinearSolver iterations="50000" name="linear solver" tolerance="1.0e-17" threshold="1.0e-17" /> 
+<!-- <SparseLUSolver /> -->
+		<StaticSolver name="default12" applyIncrementFactor="true" />
+        <MechanicalObject name="dofs" rest_position="@[-5].output_position"/>
+		<MeshMatrixMass name="mass" lumping="1" printMass="0" massDensity="1" />	
+		<BoxROI box="-0.01 -0.01 -0.01 0.01 0.01 0.01" drawBoxes="1" name="fixedPoint"  />
+		<FixedConstraint indices="@fixedPoint.indices" />
+		<FixedPlaneConstraint direction="0 0 1" dmin="-0.01" dmax="0.01"  />
+		<BoxROI box="-0.9 -0.9 0.99 0.9 0.9 1.01" trianglesInROI="1" drawBoxes="1" name="pressurePlane"  />
+	<!-- 	<ProjectToLineConstraint direction="1 0 0" origin="0 0 0" indices="15"  /> -->
+	<!-- 	<TrianglePressureForceField  onRestPosition="0" showForces="1"  triangleList="@pressurePlane.triangleIndices" pressure="0.0 0 -0.1804511277" /> -->
+		<!-- <TrianglePressureForceField  showForces="1"  triangleList="@pressurePlane.triangleIndices" pressureScalar="3.880185603" />	 -->
+ <SurfacePressureForceField  useTangentStiffness="false"   triangleIndices="@pressurePlane.triangleIndices"  pressure="0.3883416901" />
+
+	   <!--  <TetrahedralStVenantKirchhoffForceField poissonRatio="0.1" compressible="true" youngModulus="1"  />   -->
+	<!-- 	<MRForceField ParameterSet="" /> -->
+	   <StandardTetrahedralFEMForceField materialName="NeoHookean" ParameterSet="0.454545 0.4166667"/>
+		<Monitor indices="52" showPositions="1" ExportPositions="1"/>
+</Node>

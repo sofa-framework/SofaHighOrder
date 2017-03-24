@@ -1,0 +1,41 @@
+<Node name="Root" gravity="0 0 0" dt="0.05" displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields">
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />	
+	<Object type="LightManager" shadows="0" ambient="1 1 1 1"/>
+	<Node name="MecaQuadNode" gravity="0 0 0">
+        <!-- <MeshVTKLoader name="VtkLoader" filename="mesh/LiverXSTet10.vtk" /> -->
+	   <!-- <MeshGmshLoader name="VtkLoader" filename="mesh/pieceCoarse.msh" />  -->
+	   <MeshGmshLoader name="VtkLoader" filename="mesh/t13.msh" /> 	   
+	      <!-- <GenerateBezierCylinder template="Vec3d" name="Cylinder" radius="0.2" height="1.0" resHeight="2" resCircumferential="3" resRadial="1" BezierTetrahedronDegree="3" /> -->
+	    <!-- <HighOrderTetrahedronSetTopologyContainer name="ContainerBezier"  degree="@Cylinder.BezierTetrahedronDegree" isRational="@Cylinder.isBezierTetrahedronRational"  weights="@Cylinder.BezierTetrahedronWeights" tetrahedra="@Cylinder.tetrahedra" position="@Cylinder.output_TetrahedraPosition"/> -->
+
+		<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier"  position="@VtkLoader.position" tetrahedra="@VtkLoader.tetrahedra" inputHighOrderEdges="@VtkLoader.edges" inputHighOrderEdgePositions="@VtkLoader.highOrderEdgePositions"  degree="2" />	
+		<MechanicalObject showObject="0" name="BezierMeca" template="Vec3d" />	
+		<LagrangeTetrahedronSetGeometryAlgorithms name="GeomAlgo" template="Vec3d" printLog="1" drawControlPoints="false"  drawEdges="true" drawColorEdges="1 0 0"/>
+		<StaticSolver  applyIncrementFactor="1"/> 
+		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+		<Sphere />
+		<HighOrderTetrahedralCorotationalFEMForceField name="Elasticity" template="Vec3d" printLog="1" poissonRatio="0.45" forceAffineAssemblyForAffineElements="1" youngModulus="4"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="4" method="qr"  /> 
+		<FixedConstraint indices="0 1 2 3 4 5" />
+		<Node>
+			<HighOrderTriangleSetTopologyContainer name="ContainerBezierSurface" />	
+			<TriangleSetTopologyModifier name="ModifierSurface" />
+			<HighOrderTetra2HighOrderTriangleTopologicalMapping name="MappingBezierSurface" input="@../ContainerBezier" output="@ContainerBezierSurface" />
+			<BezierTriangleSetGeometryAlgorithms template="Vec3d" drawControlPoints="0" /> 
+
+				<Node 	name="Surface" gravity="0 0 0" >
+					<TriangleSetTopologyContainer name="Container2" />
+					<TriangleSetTopologyModifier name="ModifierSurface2" />
+					<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="8" name="TesselatingBezierSurface" input="@../ContainerBezierSurface" output="@Container2" />
+					<MechanicalObject template="Vec3d" name="triangleDofs" />
+					<TriangleSetGeometryAlgorithms template="Vec3d"  drawEdges="false" drawColorEdges="0 0 1" /> 
+					
+					<Bezier2MeshMechanicalMapping mapForces="0" input="@../../BezierMeca" output="@triangleDofs"/>
+					<Node 	name="visu" gravity="0 0 0"  >
+						<OglModel template="ExtVec3f" name="oglPotentiel"  useVBO="0" />
+						<IdentityMapping template="Vec3d,ExtVec3f" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../triangleDofs"  output="@oglPotentiel" />
+					</Node>  <!-- visu-->
+				</Node>
+		</Node>
+	</Node> <!-- meca -->
+</Node> <!-- root -->

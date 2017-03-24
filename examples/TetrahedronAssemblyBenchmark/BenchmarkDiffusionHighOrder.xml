@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <Node name="MeshTopology">
+<!-- 	   <GenerateCylinder template="Vec3d" name="Cylinder" radius="0.2" height="1.0" resHeight="3" resCircumferential="5" resRadial="2" BezierTetrahedronDegree="2" /> -->
+   <GenerateCylinder template="Vec3d" name="Cylinder" radius="0.2" height="1.0" resHeight="6" resCircumferential="8" resRadial="3"  />	   
+        <TetrahedronSetTopologyContainer name="Container1" tetrahedra="@Cylinder.tetrahedra" position="@Cylinder.output_TetrahedraPosition" />
+   
+		<TetrahedronSetGeometryAlgorithms name="GeomAlgo" drawEdges="0" />
+        <MechanicalObject name="dofs" />
+		<Node name="HighOrder">
+			
+        	<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
+		
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="3" />
+			<MechanicalObject showObject="0" showObjectScale="1" />	
+			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
+			<Node name="ElecNode" gravity="0 0 0"  >
+					
+					<!-- ReactionDiffusion State -->
+
+					<MechanicalObject template="Vec1d" name="ElecObj" position="0" tags="EPModel"/>
+					<BezierTetrahedronSetGeometryAlgorithms template="Vec1d"  /> 
+					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" printLog="1" forceAffineAssemblyForAffineElements="0" diffusivity="0.01" anisotropyParameters="3" anisotropyDirection="1 0 0" anisotropy="transverseIsotropy" integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="4" tags="EPModel" />
+			</Node>
+		</Node>
+    </Node>
+</Node>

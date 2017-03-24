@@ -1,0 +1,2 @@
+<Node displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields" dt="0.05" gravity="0 0 0" name="Root">
+	<RequiredPlugin name="SofaPython" pluginName="SofaPython" /><PythonScriptController classname="TestElasticityHighOrder2D" filename="TestElasticityHighOrder2DPython.py" listening="1" name="TestElasticityHighOrder2D" /></Node>

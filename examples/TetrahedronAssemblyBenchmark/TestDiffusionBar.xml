@@ -1,0 +1,64 @@
+<Node name="Root" gravity="0 0 0" dt="0.05" displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields">
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin pluginName="Electrophysiology"/>
+	<Object type="LightManager" shadows="0" ambient="1 1 1 1"/>
+	<Node name="MecaNode" gravity="0 0 0">
+
+		<MechanicalObject template="Vec3d" name="mecaObj" tags="meca"/>
+		<RegularGridTopology name="grid" n="61 13 13" min="0 0 0" max="2 0.2 0.2" p0="0.0 0.0 0.0" tags="meca"/>
+		<Node 	name="Tetra" gravity="0 0 0" >
+			<TetrahedronSetTopologyContainer name="Container" tags="meca"/>
+			<TetrahedronSetTopologyModifier name="Modifier" tags="meca"/>
+			<TetrahedronSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" tags="meca"/>
+			<TetrahedronSetGeometryAlgorithms template="Vec3d" name="GeomAlgo"  tags="meca"/>
+			<Hexa2TetraTopologicalMapping name="default28" input="@grid" output="@Container" swapping="1" tags="meca"/>
+			<TriangleModel name="collisionmodel" />
+
+
+
+
+			<Node name="ElecNode" gravity="0 0 0"   >
+				<!-- ODE Solver -->
+				<EulerImplicitSolver name="Euler" firstOrder="1" tags="EPModel"/>
+				<!-- Iterative solver -->
+				<CGLinearSolver name="CG"  iterations="1000" tolerance="1.0e-10" threshold="1.0e-30" tags="EPModel" />
+
+				<!-- ReactionDiffusion State -->
+  				<PotentielInitialization template="PotentielInitialization<Vec3d,Vec1d>" name="init"  tags="EPModel"/>
+				<MechanicalObject template="Vec1d" name="ElecObj" position="@init.outputsPotentiel" tags="EPModel"/>
+
+				<!-- Mass -->
+				<MeshMatrixMass template="Vec1d" name="Mass" lumping="1" massDensity="1" tags="mass"/>
+				
+				<!-- ForceField -->
+				<!-- <TetrahedralReactionForceField template="Vec1d" name="Reaction" integrationMethod="lumping" integrationOrder="0" tagMass="mass" tags="laReaction" /> -->
+				<FisherKolmogorovCurrentField template="Vec1d" name="Reaction" Main_alpha="1.0" vertexVolume="@Mass.vertexMass"  tags="EPModel" /> 			
+				<TetrahedralDiffusionForceField template="Vec1d" name="Diffusion" diffusivity="1.0" scalarDiffusion="1" tags="EPModel" />
+
+				<!-- Constraint -->
+				<BoxROI name="box1" template="Vec3d" box="-0.1 -0.1 -0.1 0.1 0.21 0.21" drawBoxes="1" drawPoints="1" position="@../../mecaObj.rest_position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
+				<CardiacImpulseConstraint name="cardiacConstraint" indices="@box1.indices" amplitude="1" endTime="0.0" tags="EPModel"/>
+
+				
+
+
+
+				<!--  VISU  -->
+				<Node 	name="Surface" gravity="0 0 0" >
+					<TriangleSetTopologyContainer name="Container2" tags="surf"/>
+					<TriangleSetTopologyModifier name="Modifier" tags="surf"/>
+					<TriangleSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" tags="surf"/>
+					<Tetra2TriangleTopologicalMapping name="default28" input="@../../../Tetra/Container" output="@Container2" tags="Surface"/>
+
+					<Node 	name="visu" gravity="0 0 0"  >
+						<TextureInterpolation template="Vec1d" name="EngineInterpolation"  input_states="@../../../ElecNode/ElecObj.position"  input_coordinates="@../../../../mecaObj.position"  min_value="0"  max_value="1"  manual_scale="1"  drawPotentiels="0"  showIndicesScale="5e-05"  vertexPloted="1" />
+						<OglModel template="ExtVec3f" name="oglPotentiel"  texcoords="@EngineInterpolation.output_coordinates" texturename="texture/heatColor.bmp"  useVBO="0" />
+						<IdentityMapping template="Vec3d,ExtVec3f" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../../../../mecaObj"  output="@oglPotentiel" />
+					</Node>  <!-- visu-->
+
+				</Node> <!-- Surface-->
+			</Node> <!-- ElecNode-->
+		</Node> <!-- tetra -->
+	</Node> <!-- meca -->
+</Node> <!-- root -->

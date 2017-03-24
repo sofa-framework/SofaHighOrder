@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<Node 	name="Root" gravity="0 0 0" time="0" animate="0"   >
+    <RequiredPlugin name="SofaPython" pluginName="SofaPython" />
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />	
+	<VisualStyle displayFlags="hideVisualModels showBehaviorModels showMappings showForceFields" />
+	<PythonScriptController filename="benchmarkTetrahedronElasticity.py" classname="BenchmarkTetrahedronElasticity" variables="4 1 2 elasticityTetra analytical 4" printLog="false" />
+</Node>
+<!-- variables="2 6 12 elasticityTetra analytical 4" -->

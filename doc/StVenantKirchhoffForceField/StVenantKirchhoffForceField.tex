@@ -1,0 +1,80 @@
+\documentclass[a4paper,11pt]{article}
+\input{../macros_docu} % This file is in parent directory. Your TEXINPUTS environment variable must include .. to reach this file. Example: setenv TEXINPUTS ..:../..:${TEXINPUTS}
+
+
+
+\graphicspath{{./images/}}
+% ---- format de page A4
+	\setlength{\textwidth }{16cm}	% largeur de ligne
+	\setlength{\textheight}{23cm}   % hauteur du texte
+	\setlength{\oddsidemargin}{0cm} % marge pages impaires
+	\setlength{\evensidemargin}{0cm}% marge pages paires
+	\setlength{\topmargin}{0cm} 	
+	\setlength{\headheight}{14pt} 
+	\setlength{\headsep}{0.5cm} 
+
+%\newcommand{\trace}{{\mathrm tr}}
+\newcommand{\pos}{{\mathbf X}}
+\newcommand{\strain}{{\mathbf E}}
+\newcommand{\rcgd}{{\mathbf C}}
+\newcommand{\spk}{{\mathbf \Sigma}}
+\newcommand{\fpk}{{\mathbf P}}
+\newcommand{\defGrad}{{\mathbf F}}
+\newcommand{\identity}{\mathbf{Id}}
+\newcommand{\dir}{\mathbf{e}}
+% Title Page
+\title{StVenantKirchhoffForceField in Sofa}
+%\author{The \sofa{} team}
+\date{2014}
+\author{Herv\'e Delingette\\ {\small INRIA M\'editerran\'ee, Sophia Antipolis, France}}
+
+
+
+
+
+\begin{document} 
+\maketitle
+
+\section{Patch test}
+
+The density of energy writes as :
+\[
+ w(\pos)=\frac{\lambda}{2} (\trace \strain)^2 + \mu \trace \strain^2 +\frac{3}{4}(\lambda+2\mu)|J-1|^4_{-}
+\]
+The second Piola-Kirchhoff $\spk=\frac{\partial w}{\partial \strain}$ then is equal to:
+\[
+\spk=\lambda (\trace \strain) \identity + \mu \strain +3 J(\lambda+2\mu) |J-1|^3_{-} \rcgd^{-1}
+\]
+The first  Piola-Kirchhoff $\fpk$ is:
+\[
+\fpk= \lambda (\trace \strain) \defGrad + \mu \defGrad \strain +3 J(\lambda+2\mu) |J-1|^3_{-} \defGrad^{-T}
+\]
+Since $\rcgd=\defGrad^T \defGrad$ then $\rcgd=\defGrad^{-1} \defGrad^{-T}$ and $\defGrad \rcgd^{-1}=\defGrad^{-T}$.
+
+In case of uniform extension, we have :
+\begin{align*}
+\defGrad &=\nabla \Phi=\left [ \begin{array}{ccc} \lambda_1 & 0 & 0 \\0 & \lambda_2 & 0 \\ 0 & 0 & \lambda_3 \end{array} \right ] \\
+J &= \lambda_1 \lambda_2 \lambda_3\\
+\rcgd &=  \defGrad^T \defGrad = \left [ \begin{array}{ccc} \lambda_1^2 & 0 & 0 \\0 & \lambda_2^2 & 0 \\ 0 & 0 & \lambda_3^2 \end{array} \right ] \\
+\strain &= \frac{1}{2}(\rcgd-\identity) = \left [ \begin{array}{ccc} \frac{\lambda_1^2-1}{2} & 0 & 0 \\0 & \frac{\lambda_2^2-1}{2} & 0 \\ 0 & 0 & \frac{\lambda_3^2-1}{2} \end{array} \right ] \\
+\spk&=\frac{\lambda (\lambda_1^2+\lambda_2^2+\lambda_3^2-3)}{3} \identity + \mu \strain +3 J(\lambda+2\mu) |J-1|^3_{-}\left [ \begin{array}{ccc} \lambda_1^{-2} & 0 & 0 \\0 & \lambda_2^{-2} & 0 \\ 0 & 0 & \lambda_3^{-2} \end{array} \right ] \\
+\fpk&= \defGrad \spk= \frac{\lambda (\lambda_1^2+\lambda_2^2+\lambda_3^2-3)}{3} \defGrad + \mu \defGrad \strain +3 J(\lambda+2\mu) |J-1|^3_{-}\left [ \begin{array}{ccc} \lambda_1^{-1} & 0 & 0 \\0 & \lambda_2^{-1} & 0 \\ 0 & 0 & \lambda_3^{-1} \end{array} \right ] 
+\end{align*}
+
+We consider the case of a cube on which a pressure $p$ is applied on its upper face oriented along the $\dir_3$ direction and which is free to deform along the faces oriented along the $\dir_1$ and $\dir_2$ directions. Then we use the 3 relations $\fpk \dir_3=(0 0 p)^T$ and $\fpk \dir_2 =\fpk \dir_1 = {\mathbf 0}$ to obtain a relation between $p$ and $\{\lambda_i\}$. 
+
+More precisely, we obtain :
+\begin{align*}
+p&=\lambda \lambda_3 \frac{(\lambda_1^2+\lambda_2^2+\lambda_3^2-3)}{3} +\mu \frac{\lambda_3 (\lambda_3^2-1)}{2}+3\lambda_1 \lambda_2  (\lambda+2\mu) |\lambda_1 \lambda_2 \lambda_3-1|^3_{-}\\
+0&=\lambda \lambda_1 \frac{(\lambda_1^2+\lambda_2^2+\lambda_3^2-3)}{3} +\mu \frac{\lambda_1 (\lambda_1^2-1)}{2}+3\lambda_2 \lambda_3  (\lambda+2\mu) |\lambda_1 \lambda_2 \lambda_3-1|^3_{-}\\
+0&=\lambda \lambda_2 \frac{(\lambda_1^2+\lambda_2^2+\lambda_3^2-3)}{3} +\mu \frac{\lambda_2 (\lambda_2^2-1)}{2}+3\lambda_1 \lambda_3  (\lambda+2\mu) |\lambda_1 \lambda_2 \lambda_3-1|^3_{-}
+\end{align*}
+
+If $J>0$ then $\lambda_1=\lambda_2$ according to the last 2 equations. Otherwise, we write $\lambda_2=\alpha \lambda_1$ and then we obtain :
+\begin{align*}
+ \alpha^2 = \frac{A+B(\lambda_1^2-1)}{ (A+B(\alpha^2\lambda_1^2-1))} \\
+ \alpha^2 (A+B(\alpha^2\lambda_1^2-1)) = A+B(\lambda_1^2-1)
+\end{align*}
+The discriminant is equal to $(A-B)^2+4B\lambda_1(A+B(\lambda_1^2-1))$
+\end{document}          
+

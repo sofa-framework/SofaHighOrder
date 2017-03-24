@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+    <!-- <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" /> -->
+    <!-- <CollisionPipeline verbose="0" name="CollisionPipeline" /> -->
+    <!-- <BruteForceDetection name="N2" /> -->
+    <!-- <CollisionResponse response="default" name="collision response" /> -->
+    <Node name="MeshTopology">
+        <TetrahedronSetTopologyContainer name="Container1" tetrahedra="0 1 2 3" position="0 0 0 1 0 0 0 1 0 0 0 1"/>
+        <TetrahedronSetGeometryAlgorithms name="GeomAlgo" drawEdges="0" />
+        <MechanicalObject name="dofs" />
+		<Node name="HighOrder">
+	<!-- 		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+			<StaticSolver  applyIncrementFactor="1"/>  -->
+        	<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
+		
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="2" />
+			<MechanicalObject  />	
+			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="1"  drawEdges="1" drawColorEdges="1 0 0"/>
+		<!-- 	<FixedConstraint indices="0 1 2" />
+			<HighOrderMeshMatrixMass name="mass" massDensity="1" integrationMethod="analytical" lumping="1" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" integrationOrder="6" printLog="0"  />
+			<HighOrderTetrahedralCorotationalFEMForceField name="Elasticity" printLog="1" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="numerical2" numericalIntegrationMethod="3" integrationOrder="4" method="qr"  />
+ -->			</Node>
+    </Node>
+</Node>

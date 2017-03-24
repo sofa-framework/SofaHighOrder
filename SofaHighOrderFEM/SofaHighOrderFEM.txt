@@ -1,0 +1,17 @@
+
+************************************
+*      SofaHighOrderFEM.txt      *
+************************************
+
+
+
+AUTHOR : Herve Delingette
+
+
+
+LICENCE :
+ - Private
+
+
+
+OTHER COMMENTS :

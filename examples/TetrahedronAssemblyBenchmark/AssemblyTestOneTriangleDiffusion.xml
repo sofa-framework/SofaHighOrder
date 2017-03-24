@@ -1,0 +1,37 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin pluginName="Electrophysiology"/>	
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <Node name="MeshTopology">
+        <TriangleSetTopologyContainer name="Container1" triangles="0 1 2" position="0 0 0 1 0 0 0 1 0"/>
+        <TriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawEdges="1" />
+        <MechanicalObject name="dofs" template="Vec2d"/>
+		<Node name="HighOrder">
+
+        	<HighOrderTriangleSetTopologyContainer name="ContainerBezier" />	
+		
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTriangleDegree="5" />
+			<MechanicalObject showObject="0" showObjectScale="1" template="Vec2d" />	
+			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
+			<HighOrderMeshMatrixMass name="Mass"  template="Vec2d" lumping="0" massDensity="1" integrationMethod="analytical" numericalIntegrationMethod="3" integrationOrder="6" printLog="0" />
+			<Node name="ElecNode" gravity="0 0 0"  >
+				
+					<BezierTriangleSetGeometryAlgorithms template="Vec1d"  /> 
+					<!-- ReactionDiffusion State -->
+					<PotentielInitialization  template="Vec2d,Vec1d"  name="init"  tags="EPModel" />
+					<MechanicalObject template="Vec1d" name="ElecObj" position="@init.outputsPotentiel" tags="EPModel"/>
+
+	
+					<!-- ForceField -->
+					<HighOrderTriangularDiffusionForceField template="Vec1d" name="Diffusion" forceAffineAssemblyForAffineElements="0" integrationMethod="standard" numericalIntegrationMethod="3" anisotropyParameters="2" integrationOrder="8"  diffusivity="3.0" anisotropy="isotropy" anisotropyDirection="0 0 1" printLog="1" tags="EPModel" />
+
+
+			</Node>
+		</Node>
+    </Node>
+</Node>

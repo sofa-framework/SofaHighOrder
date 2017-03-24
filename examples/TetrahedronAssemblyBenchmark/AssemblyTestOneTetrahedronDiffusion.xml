@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin pluginName="Electrophysiology"/>
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <Node name="MeshTopology">
+        <TetrahedronSetTopologyContainer name="Container1" tetrahedra="0 1 2 3" position="0 0 0 1 0 0 0 1 0 0 0 1"/>
+        <TetrahedronSetGeometryAlgorithms name="GeomAlgo" drawEdges="0" />
+        <MechanicalObject name="dofs" />
+		<Node name="HighOrder">
+			<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
+		
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="2" />
+			<MechanicalObject name="bezierObj" showObject="0" showObjectScale="1" tags="BezierPosition" />	
+			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="1"  drawEdges="1" drawColorEdges="1 0 0"/>
+
+			<Node name="ElecNode" gravity="0 0 0"  >
+				<!-- ODE Solver -->
+					<EulerImplicitSolver name="Euler" firstOrder="1" tags="EPModel"/>
+					<!-- Iterative solver -->
+					<CGLinearSolver name="CG"  iterations="1000" tolerance="1.0e-10" threshold="1.0e-30" tags="EPModel" />
+					<BezierTetrahedronSetGeometryAlgorithms template="Vec1d"  /> 
+					<!-- ReactionDiffusion State -->
+					<PotentielInitialization  template="Vec3d,Vec1d"  name="init"  tags="EPModel" />
+					<MechanicalObject template="Vec1d" name="ElecObj" position="@init.outputsPotentiel" tags="EPModel"/>
+
+	
+					
+					<!-- ForceField -->
+					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" integrationMethod="standard" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" anisotropyParameters="2" integrationOrder="8"  diffusivity="3.0" anisotropy="isotropy" anisotropyDirection="0 0 1" printLog="1" tags="EPModel" />
+
+
+			</Node>
+			</Node>
+    </Node>
+</Node>

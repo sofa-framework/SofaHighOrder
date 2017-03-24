@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.2" showBoundingTree="0" gravity="0 0 0">
+    <RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <Node name="MeshTopology">
+        <TriangleSetTopologyContainer name="Container1" triangles="0 1 2" position="0 0 0 1 0 0 0 1 0"/>
+        <TriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawEdges="1" />
+        <MechanicalObject name="dofs" template="Vec2d"/>
+		<Node name="HighOrder">
+
+        	<HighOrderTriangleSetTopologyContainer name="ContainerBezier" />	
+		
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTriangleDegree="4" />
+			<MechanicalObject showObject="0" showObjectScale="1" template="Vec2d" />	 
+			<LagrangeTriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
+			<HighOrderMeshMatrixMass name="Mass"  template="Vec2d" lumping="1" massDensity="1" integrationMethod="numerical" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" integrationOrder="8" printLog="0" />
+			<HighOrderTriangularCorotationalFEMForceField name="Elasticity"  template="Vec2d" printLog="1" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="5" method="linear"  />
+			
+			</Node>
+    </Node>
+</Node>

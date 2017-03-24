@@ -1,0 +1,47 @@
+<?xml version="1.0" ?>
+<Node name="root" dt="0.25" showBoundingTree="0" gravity="0 0 0">
+   <RequiredPlugin name="SofaAdvancedFEM plugin" pluginName="SofaAdvancedFEM" />
+    <VisualStyle displayFlags="showBehaviorModels showForceFields showCollisionModels showVisual" />
+    <CollisionPipeline verbose="0" name="CollisionPipeline" />
+    <BruteForceDetection name="N2" />
+    <CollisionResponse response="default" name="collision response" />
+    <DiscreteIntersection/>
+
+
+	 <Node name="BezierTriangleMeshFromEngine">
+	 <CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+			<StaticSolver applyIncrementFactor="1" /> 
+		<GenerateCylinder template="Vec3d" name="Cylinder" radius="0.2" height="0.4" resHeight="2" resCircumferential="3" resRadial="1" BezierTetrahedronDegree="3" />
+        <BezierTetrahedronSetTopologyContainer name="Container1" degree="@[-1].BezierTetrahedronDegree" isRational="@[-1].isBezierTetrahedronRational" weights="@[-1].BezierTetrahedronWeights" tetrahedra="@[-1].tetrahedra" position="@[-1].output_TetrahedraPosition"/>
+		<BezierTetrahedronSetGeometryAlgorithms  drawEdges="0"/>
+	    <MechanicalObject name="dofs" rest_position="@Cylinder.output_TetrahedraPosition"/>
+		<MeshMatrixMass template="Vec3d" name="mass" lumping="1" printMass="0" massDensity="1"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="4"/>	
+			<BoxROI box="-1.2 -1.2 -0.01 1.2 1.2 0.01" drawBoxes="0" name="fixedPlane"  />
+			<FixedConstraint indices="@fixedPlane.indices" />
+			<BoxROI box="-1.2 -1.2 0.399 1.2 1.2 0.401" drawBoxes="0" name="pressurePlane"  />
+			<!-- <ConstantForceField points="@pressurePlane.indices" totalForce="0.0.0 -0.4" /> -->
+			<BezierTetrahedralCorotationalFEMForceField poissonRatio="0.45" youngModulus="10"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="4" method="qr" /> 
+			<SphereModel radius="0.002" />
+		  <Node name="BezierCubicTriangleTopology">
+				<TriangleSetTopologyModifier />
+				<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier"/>	
+				<BezierTetra2BezierTriangleTopologicalMapping input="@../Container1" output="@ContainerTriangleBezier"  />
+				<BezierTriangleSetGeometryAlgorithms name="GeomAlgo" drawControlPointsEdges="false" drawControlPoints="false" drawSmoothEdges="false" />				
+			<!-- 	<OglModel name="VisualModel"  useBezierPatch="1" bezierTesselation="5"/>  -->
+				<Node name="TriangleTopology">
+					<TriangleSetTopologyContainer name="triangulation" />
+					<TriangleSetGeometryAlgorithms  />
+					<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="7" input="@../ContainerTriangleBezier" output="@triangulation"/>
+					<MechanicalObject name="triangleDofs" />
+					<Bezier2MeshMechanicalMapping mapForces="0" input="@../../dofs" output="@triangleDofs"/>
+					<Node name="VisualNode">
+						<OglModel name="VisualModel" />
+						<IdentityMapping input="@.."  output="@VisualModel" />
+					</Node>
+				</Node>
+			  </Node>
+		
+
+	 </Node>
+
+</Node>

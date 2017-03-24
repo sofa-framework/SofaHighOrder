@@ -1,0 +1,13 @@
+# CMake package configuration file for the SofaHighOrderFEM plugin
+
+@PACKAGE_INIT@
+
+find_package(SofaFramework REQUIRED)
+find_package(SofaSimulation REQUIRED)
+find_package(SofaMisc REQUIRED)
+
+
+
+check_required_components(SofaHighOrderFEM)
+set(SOFAHIGHORDERFEM_LIBRARIES SofaHighOrderFEM)
+set_and_check(SOFAHIGHORDERFEM_INCLUDE_DIRS @PACKAGE_SOFAHIGHORDERFEM_INCLUDE_DIRS@)
