@@ -214,7 +214,7 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 				const VecPointID &indexArray=container->getGlobalIndexArrayOfControlPoints(0);
 				std::vector<Real> edgeLengthArray;
 				// compute median of the edge distance between control points	
-				sofa::helper::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
+				std::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
 //				Real val=0;
 				Coord pp;
 				for (; ite!=bezierTriangleEdgeSet.end(); ite++)
@@ -275,7 +275,7 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 				const VecPointID &indexArrayFirst=container->getGlobalIndexArrayOfControlPoints(0);
 				std::vector<Real> edgeLengthArray;
 				// compute median of the edge distance between control points	
-				sofa::helper::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
+				std::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
 //				Real val=0;
 				Coord pp;
 				for (; ite!=bezierTriangleEdgeSet.end(); ite++)
@@ -368,7 +368,7 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 						trianCoord.push_back(p);
 					}
 					
-					sofa::helper::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
+					std::set<std::pair<Edge,size_t> >::iterator ite=bezierTriangleEdgeSet.begin();
 					for (; ite!=bezierTriangleEdgeSet.end(); ite++)
 					{
 						if ((*ite).second) {

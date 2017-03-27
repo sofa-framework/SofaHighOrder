@@ -53,7 +53,7 @@ protected:
 	// array of Tetrahedral Bezier indices
 	sofa::helper::vector<TriangleIndexVector> tbiArray;
 	/// the list of edges of the Bezier Triangle used in the draw function
-    sofa::helper::set<std::pair<Edge,size_t> > bezierTriangleEdgeSet;
+    std::set<std::pair<Edge,size_t> > bezierTriangleEdgeSet;
 
 	/// constructor 
 	HighOrderTriangleSetGeometryAlgorithms();
