@@ -97,7 +97,7 @@ void AdaptiveBezierTetrahedronSetTopologyAlgorithms< DataTypes >::updateTetrahed
 	sofa::helper::vector<TetraID>& raisingDegreeTetrahedra) 
 {
 	// points to be removed in descending order
-	sofa::helper::set<size_t,std::greater<size_t> > pointsToBeRemoved;
+	std::set<size_t,std::greater<size_t> > pointsToBeRemoved;
 	HighOrderDegreeType degree=m_adaptiveContainer->getDegree();
 	size_t i,j,p;
 	size_t tetrahedronIndex;
@@ -292,7 +292,7 @@ void AdaptiveBezierTetrahedronSetTopologyAlgorithms< DataTypes >::updateTetrahed
 			this->m_modifier->removePointsWarning(indexList);
 			this->m_modifier->propagateTopologicalChanges();
 			// update the weight array 
-			sofa::helper::set<size_t>::iterator itset,itsetNext;
+			std::set<size_t>::iterator itset,itsetNext;
             unsigned int lastPoint = this->m_container->getNbPoints() - 1;
 			HighOrderTetrahedronSetTopologyContainer::SeqWeights &wa=*(m_adaptiveContainer->d_weightArray.beginEdit());	
 			for (itset=pointsToBeRemoved.begin();itset!=pointsToBeRemoved.end();++itset,--lastPoint)
