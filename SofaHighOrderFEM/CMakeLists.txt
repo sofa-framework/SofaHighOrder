@@ -8,43 +8,22 @@ set(SOFAHIGHORDERFEM_VERSION ${SOFAHIGHORDERFEM_MAJOR_VERSION}.${SOFAHIGHORDERFE
 set(HEADER_FILES
 	HighOrderMeshMatrixMass.h
 	HighOrderMeshMatrixMass.inl
-    initHighOrderFEM.h
-	AdaptiveBezierMeshMatrixMass.h
-	AdaptiveBezierMeshMatrixMass.inl
-	AdaptiveBezierTetrahedronController.h
-	AdaptiveBezierTetrahedronController.inl
-	AdaptiveBezierTetra2BezierTriangleTopologicalMapping.h
-	AdaptiveBezierTetra2BezierTriangleMechanicalMapping.h
-	AdaptiveBezierTetra2BezierTriangleMechanicalMapping.inl
-	AdaptiveBezierTetrahedronSetTopologyModifier.h
-	AdaptiveBezierTetrahedronSetTopologyContainer.h
-	AdaptiveBezierTetrahedronSetTopologyAlgorithms.h
-	AdaptiveBezierTetrahedronSetTopologyAlgorithms.inl
-	AdaptiveBezierTetrahedralCorotationalFEMForceField.h 
-    AdaptiveBezierTetrahedralCorotationalFEMForceField.inl
+    	initHighOrderFEM.h
 	HighOrderTetrahedralCorotationalFEMForceField.h 
-    HighOrderTetrahedralCorotationalFEMForceField.inl
+    	HighOrderTetrahedralCorotationalFEMForceField.inl
 	HighOrderTriangularCorotationalFEMForceField.h 
-    HighOrderTriangularCorotationalFEMForceField.inl
+    	HighOrderTriangularCorotationalFEMForceField.inl
 	HighOrderTetrahedralDiffusionForceField.h 
-    HighOrderTetrahedralDiffusionForceField.inl
+    	HighOrderTetrahedralDiffusionForceField.inl
 	HighOrderTriangularDiffusionForceField.h 
-    HighOrderTriangularDiffusionForceField.inl
+    	HighOrderTriangularDiffusionForceField.inl
 	)
 
 set(SOURCE_FILES
 	HighOrderMeshMatrixMass.cpp
 	initHighOrderFEM.cpp
-	AdaptiveBezierMeshMatrixMass.cpp
-	AdaptiveBezierTetrahedronController.cpp
-	AdaptiveBezierTetra2BezierTriangleTopologicalMapping.cpp
-	AdaptiveBezierTetra2BezierTriangleMechanicalMapping.cpp
-	AdaptiveBezierTetrahedronSetTopologyContainer.cpp
-	AdaptiveBezierTetrahedronSetTopologyModifier.cpp
-	AdaptiveBezierTetrahedronSetTopologyAlgorithms.cpp
-    AdaptiveBezierTetrahedralCorotationalFEMForceField.cpp 
-    HighOrderTetrahedralCorotationalFEMForceField.cpp 
-    HighOrderTriangularCorotationalFEMForceField.cpp 
+    	HighOrderTetrahedralCorotationalFEMForceField.cpp 
+    	HighOrderTriangularCorotationalFEMForceField.cpp 
 	HighOrderTetrahedralDiffusionForceField.cpp
 	HighOrderTriangularDiffusionForceField.cpp
 	)

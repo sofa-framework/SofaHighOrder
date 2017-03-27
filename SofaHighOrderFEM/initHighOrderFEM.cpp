@@ -55,8 +55,6 @@ const char* getModuleComponentList()
 
 
 
-SOFA_LINK_CLASS(AdaptiveBezierTetra2BezierTriangleMechanicalMapping)
-SOFA_LINK_CLASS(AdaptiveBezierTetrahedronController)
 SOFA_LINK_CLASS(HighOrderTetrahedralCorotationalFEMForceField)
 SOFA_LINK_CLASS(HighOrderMeshMatrixMass)
 
