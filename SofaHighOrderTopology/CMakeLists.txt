@@ -72,3 +72,11 @@ sofa_create_package(SofaHighOrderTopology ${SOFAHIGHORDERTOPOLOGY_VERSION} SofaH
 #
 SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON)
 SET_PROPERTY(TARGET ${PROJECT_NAME}	PROPERTY FOLDER "SofaHighOrderTopology")
+
+
+if(SOFA_BUILD_TESTS)
+    find_package(SofaTest QUIET)
+    if(SofaTest_FOUND)
+        add_subdirectory(SofaHighOrderTopology_test)
+    endif()
+endif()

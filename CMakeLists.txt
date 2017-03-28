@@ -4,10 +4,5 @@ find_package(SofaFramework REQUIRED)
 sofa_add_plugin(SofaHighOrderTopology/ SofaHighOrderTopology)
 sofa_add_plugin(SofaHighOrderFEM/ SofaHighOrderFEM)
 
-if(SOFA_BUILD_TESTS)
-    find_package(SofaTest QUIET)
-    if(SofaTest_FOUND)
-        add_subdirectory(SofaHighOrderTopology_test)
-    endif()
-endif()
-#sofa_install_git_version( "sofa-dev" ${CMAKE_CURRENT_SOURCE_DIR} )
+
+sofa_install_git_version( "plugin.HighOrder" ${CMAKE_CURRENT_SOURCE_DIR} )
