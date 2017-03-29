@@ -34,7 +34,7 @@ const char* getModuleName()
 
 const char* getModuleVersion()
 {
-    return "0.5";
+    return "0.2";
 }
 
 const char* getModuleLicense()

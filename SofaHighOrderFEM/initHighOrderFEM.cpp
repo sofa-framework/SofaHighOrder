@@ -39,7 +39,7 @@ const char* getModuleVersion()
 
 const char* getModuleLicense()
 {
-    return "private";
+    return "LGPL";
 }
 
 
