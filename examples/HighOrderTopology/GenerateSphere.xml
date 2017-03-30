@@ -1,0 +1,94 @@
+<?xml version="1.0" ?>
+
+<Node name="root" dt="0.001" showBoundingTree="0" gravity="10000 0 0">
+	<RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+	<VisualStyle displayFlags="showVisual" />
+	
+<Node name="TetrahedralSphericalTesselation" >
+	<GenerateBezierSphere template="Vec3d" name="Sphere1" radius="1.0" origin="-3 0 0" BezierTetrahedronDegree="4"   tessellationDegree="1" platonicSolid="tetrahedron" />        
+	<HighOrderTetrahedronSetTopologyContainer name="Container1"  degree="@Sphere1.BezierTetrahedronDegree" isRational="@Sphere1.isBezierTetrahedronRational"   weights="@Sphere1.BezierTetrahedronWeights" tetrahedra="@Sphere1.tetrahedra" position="@Sphere1.output_TetrahedraPosition"/>
+	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
+	<MechanicalObject name="dofs1" rest_position="@Sphere1.output_TetrahedraPosition"/>    
+
+	<Node name="BezierTriangleTopology" >
+		<TriangleSetTopologyModifier />
+		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    
+		<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../Container1" output="@ContainerTriangleBezier1" useSurfaceExtrapolation="1"  />
+		<BezierTriangleSetGeometryAlgorithms name="GeomAlgo1" drawControlPointsEdges="true" drawControlPoints="true" />        
+
+		<Node name="TriangleTopology">
+			<TriangleSetTopologyContainer name="triangulation1" />
+			<TriangleSetGeometryAlgorithms  />
+			<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier1" output="@triangulation1"/>
+			<MechanicalObject name="triangleDofs1" />
+			<Bezier2MeshMechanicalMapping input="@../../dofs1" mapForces="0" output="@triangleDofs1"/>
+
+			<Node name="VisualNode">
+				<OglModel name="VisualModel1" />
+				<IdentityMapping input="@.." output="@VisualModel1" />
+			</Node>
+
+		</Node>                
+
+	</Node>
+</Node>
+	
+<Node name="OctahedralSphericalTesselation" >
+	<GenerateBezierSphere template="Vec3d" name="Sphere2" radius="1.0" origin="0 0 0" BezierTetrahedronDegree="4"   tessellationDegree="1" platonicSolid="octahedron" />        
+	<HighOrderTetrahedronSetTopologyContainer name="Container2"  degree="@Sphere2.BezierTetrahedronDegree" isRational="@Sphere2.isBezierTetrahedronRational"   weights="@Sphere2.BezierTetrahedronWeights" tetrahedra="@Sphere2.tetrahedra" position="@Sphere2.output_TetrahedraPosition"/>
+	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
+	<MechanicalObject name="dofs2" rest_position="@Sphere2.output_TetrahedraPosition"/>    
+
+	<Node name="BezierTriangleTopology" >
+		<TriangleSetTopologyModifier />
+		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier2"/>    
+		<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../Container2" output="@ContainerTriangleBezier2" useSurfaceExtrapolation="1"  />
+		<BezierTriangleSetGeometryAlgorithms name="GeomAlgo2" drawControlPointsEdges="true" drawControlPoints="true" />        
+
+		<Node name="TriangleTopology">
+			<TriangleSetTopologyContainer name="triangulation2" />
+			<TriangleSetGeometryAlgorithms  />
+			<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier2" output="@triangulation2"/>
+			<MechanicalObject name="triangleDofs2" />
+			<Bezier2MeshMechanicalMapping input="@../../dofs2" mapForces="0" output="@triangleDofs2"/>
+
+			<Node name="VisualNode">
+				<OglModel name="VisualModel2" />
+				<IdentityMapping input="@.." output="@VisualModel2" />
+			</Node>
+
+		</Node>                
+
+	</Node>
+</Node>	
+	
+<Node name="IcosahedralSphericalTesselation" >
+	<GenerateBezierSphere template="Vec3d" name="Sphere3" radius="1.0" origin="3 0 0" BezierTetrahedronDegree="4"   tessellationDegree="1" platonicSolid="icosahedron" />        
+	<HighOrderTetrahedronSetTopologyContainer name="Container3"  degree="@Sphere3.BezierTetrahedronDegree" isRational="@Sphere3.isBezierTetrahedronRational"   weights="@Sphere3.BezierTetrahedronWeights" tetrahedra="@Sphere3.tetrahedra" position="@Sphere3.output_TetrahedraPosition"/>
+	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
+	<MechanicalObject name="dofs3" rest_position="@Sphere3.output_TetrahedraPosition"/>    
+
+	<Node name="BezierTriangleTopology" >
+		<TriangleSetTopologyModifier />
+		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier3"/>    
+		<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../Container3" output="@ContainerTriangleBezier3" useSurfaceExtrapolation="1"  />
+		<BezierTriangleSetGeometryAlgorithms name="GeomAlgo3" drawControlPointsEdges="true" drawControlPoints="true" />        
+
+		<Node name="TriangleTopology">
+			<TriangleSetTopologyContainer name="triangulation3" />
+			<TriangleSetGeometryAlgorithms  />
+			<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier3" output="@triangulation3"/>
+			<MechanicalObject name="triangleDofs3" />
+			<Bezier2MeshMechanicalMapping input="@../../dofs3" mapForces="0" output="@triangleDofs3"/>
+
+			<Node name="VisualNode">
+				<OglModel name="VisualModel3" />
+				<IdentityMapping input="@.." output="@VisualModel3" />
+			</Node>
+
+		</Node>                
+
+	</Node>
+</Node>	
+</Node>

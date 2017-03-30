@@ -1,0 +1,35 @@
+<Node name="Root" gravity="0 0 0" dt="0.05" displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields">
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+	<RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />	
+	<LightManager shadows="0" ambient="1 1 1 1"/>
+	<Node name="QuadNode" gravity="0 0 0">
+
+		<MeshGmshLoader name="VtkLoader" filename="mesh/t13.msh" /> 	   
+
+		<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier"  position="@VtkLoader.position" tetrahedra="@VtkLoader.tetrahedra" inputHighOrderEdges="@VtkLoader.edges" inputHighOrderEdgePositions="@VtkLoader.highOrderEdgePositions"  degree="2" />	
+		<MechanicalObject showObject="0" name="BezierMeca" template="Vec3d" />	
+		<Node>
+			<HighOrderTriangleSetTopologyContainer name="ContainerBezierSurface" />	
+			<TriangleSetTopologyModifier name="ModifierSurface" />
+			<HighOrderTetra2HighOrderTriangleTopologicalMapping name="MappingBezierSurface" input="@../ContainerBezier" output="@ContainerBezierSurface" />
+			<LagrangeTriangleSetGeometryAlgorithms template="Vec3d" drawSmoothEdges="true" drawControlPoints="1" /> 
+
+			<Node 	name="Surface" gravity="0 0 0" >
+				<TriangleSetTopologyContainer name="Container2" />
+				<TriangleSetTopologyModifier name="ModifierSurface2" />
+				<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="8" name="TesselatingBezierSurface" input="@../ContainerBezierSurface" output="@Container2" />
+				<MechanicalObject template="Vec3d" name="triangleDofs" />
+				<TriangleSetGeometryAlgorithms template="Vec3d"  drawEdges="false" drawColorEdges="0 0 1" /> 
+
+				<Bezier2MeshMechanicalMapping mapForces="0" input="@../../BezierMeca" output="@triangleDofs"/>
+				<Node 	name="visu" gravity="0 0 0"  >
+					<OglModel template="ExtVec3f" name="oglPotentiel"  useVBO="0" />
+					<IdentityMapping template="Vec3d,ExtVec3f" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../triangleDofs"  output="@oglPotentiel" />
+				</Node>
+				<!-- visu-->
+			</Node>
+		</Node>
+	</Node>
+	<!-- meca -->
+</Node>
+<!-- root -->
