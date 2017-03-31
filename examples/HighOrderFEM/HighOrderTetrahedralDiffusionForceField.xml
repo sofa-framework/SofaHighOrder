@@ -1,0 +1,84 @@
+<Node name="Root" gravity="0 0 0" dt="0.05" displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields">
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin pluginName="Electrophysiology"/>
+	<Object type="LightManager" shadows="0" ambient="1 1 1 1"/>
+	<Node name="MecaNode" gravity="0 0 0">
+
+		<MechanicalObject template="Vec3d" name="mecaObj" tags="meca"/>
+		<RegularGridTopology name="grid" n="8 8 3" min="0 0 0" max="2 2 0.3" p0="0.0 0.0 0.0" tags="meca"/>
+		<Node 	name="Tetra" gravity="0 0 0" >
+			<TetrahedronSetTopologyContainer name="Container" tags="meca" position="@../grid.position"/>
+			<TetrahedronSetTopologyModifier name="Modifier" tags="meca"/>
+			<TetrahedronSetTopologyAlgorithms template="Vec3d" name="TopoAlgo" tags="meca"/>
+			<TetrahedronSetGeometryAlgorithms template="Vec3d" name="GeomAlgo"  tags="meca"/>
+			<Hexa2TetraTopologicalMapping name="default28" input="@grid" output="@Container" swapping="1" tags="meca"/>
+			<TriangleModel name="collisionmodel" />
+
+			<Node name="HighOrder">
+				<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
+		
+				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container" output="@ContainerBezier" bezierTetrahedronDegree="2" />
+				<MechanicalObject name="bezierObj" showObject="0" showObjectScale="1" tags="BezierPosition" />	
+				<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="0"  drawEdges="0" drawColorEdges="1 0 0"/>
+
+				<Node name="ElecNode" gravity="0 0 0"  >
+					<!-- ODE Solver -->
+					<EulerImplicitSolver name="Euler" firstOrder="1" tags="EPModel"/>
+					<!-- Iterative solver -->
+					<CGLinearSolver name="CG"  iterations="1000" tolerance="1.0e-10" threshold="1.0e-30" tags="EPModel" />
+					<BezierTetrahedronSetGeometryAlgorithms template="Vec1d"  /> 
+					<!-- ReactionDiffusion State -->
+					<PotentielInitialization template="PotentielInitialization<Vec3d,Vec1d>" name="init"  tags="EPModel" />
+					<MechanicalObject template="Vec1d" name="ElecObj" position="@init.outputsPotentiel" tags="EPModel"/>
+
+					<!-- Mass -->
+					<HighOrderMeshMatrixMass template="Vec1d" name="Mass" lumping="0" forceAffineAssemblyForAffineElements="0" massDensity="1" tags="mass"/>
+					
+					<!-- ForceField -->
+					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" printLog="1" diffusivity="0.01"  forceAffineAssemblyForAffineElements="0" integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="transverseIsotropy" anisotropyDirection="1 0 0" tags="EPModel" />
+
+					<!-- Constraint -->
+					<BoxROI name="box1" template="Vec3d" box="0.9 0.9 -0.1 1.1 1.1 0.4" drawBoxes="1" drawPoints="1" position="@../bezierObj.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
+					<CardiacImpulseConstraint name="cardiacConstraint" indices="@box1.indices"  amplitude="100" endTime="0.0" tags="EPModel"/>
+
+					
+					<!-- Bezier Surface -->
+				   <Node 	name="BezierSurface"  >
+						<HighOrderTriangleSetTopologyContainer name="ContainerBezierSurface" />	
+						<TriangleSetTopologyModifier name="ModifierSurface" />
+						<HighOrderTetra2HighOrderTriangleTopologicalMapping name="MappingBezierSurface" input="@../../ContainerBezier" output="@ContainerBezierSurface" />
+						<BezierTriangleSetGeometryAlgorithms template="Vec3d" drawControlPoints="1" tagMechanics="BezierPosition"/> 
+						<!--  VISU  -->
+				<Node 	name="Surface" gravity="0 0 0" >
+					<TriangleSetTopologyContainer name="Container2" tags="surf"/>
+					<TriangleSetTopologyModifier name="ModifierSurface2" />
+					<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="4" name="TesselatingBezierSurface" input="@../ContainerBezierSurface" output="@Container2" />
+					<MechanicalObject template="Vec3d" name="triangleDofs" />
+					<TriangleSetGeometryAlgorithms template="Vec3d" /> 
+					
+					<Bezier2MeshMechanicalMapping mapForces="0" input="@../../../bezierObj" output="@triangleDofs"/>
+					
+					<!--  Interpolated potential  -->
+					<Node 	name="InterpolatedPotential" gravity="0 0 0" >
+					<MechanicalObject template="Vec1d" name="trianglePotentialDofs" />
+					<TriangleSetGeometryAlgorithms template="Vec1d"  /> 
+					
+					<Bezier2MeshMechanicalMapping mapForces="0" input="@../../../ElecObj" output="@trianglePotentialDofs"/>
+					<Node 	name="visu" gravity="0 0 0"  >
+						<TextureInterpolation template="Vec1d" name="EngineInterpolation"  input_states="@../trianglePotentialDofs.position"  input_coordinates="@../../triangleDofs.position"  min_value="0"  max_value="1"  manual_scale="1"  drawPotentiels="0"  showIndicesScale="5e-05"  vertexPloted="1" />
+						<OglModel template="ExtVec3f" name="oglPotentiel"  texcoords="@EngineInterpolation.output_coordinates" texturename="texture/heatColor.bmp"  useVBO="0" />
+						<IdentityMapping template="Vec3d,ExtVec3f" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../../triangleDofs"  output="@oglPotentiel" />
+					</Node>  <!-- visu-->
+					</Node> <!--  Interpolated potential  -->
+				</Node> <!-- Surface-->
+						
+						
+					</Node>  <!-- BezierSurface-->
+
+				
+			</Node> <!-- ElecNode-->
+			</Node> <!-- Bezier tetra -->
+		</Node> <!-- tetra -->
+	</Node> <!-- meca -->
+</Node> <!-- root -->

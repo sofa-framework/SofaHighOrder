@@ -1,0 +1,89 @@
+<?xml version="1.0" ?>
+
+<Node name="root" dt="0.0001" showBoundingTree="0" gravity="1000 0 0">
+	<RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+	<VisualStyle displayFlags="showVisual " />  
+	<Node name="TetrahedralCylinder" >
+		<GenerateBezierCylinder template="Vec3d" name="Cylinder1" radius="0.2" height="1.0" resHeight="2" resCircumferential="3" resRadial="1" BezierTetrahedronDegree="3" />       
+		<HighOrderTetrahedronSetTopologyContainer name="Container1"  degree="@Cylinder1.BezierTetrahedronDegree" isRational="@Cylinder1.isBezierTetrahedronRational"   weights="@Cylinder1.BezierTetrahedronWeights" tetrahedra="@Cylinder1.tetrahedra" position="@Cylinder1.output_TetrahedraPosition"/>
+		<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
+		<MechanicalObject name="dofs1" rest_position="@Cylinder1.output_TetrahedraPosition"/>    
+
+		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+		<!--     <StaticSolver applyIncrementFactor="1" />  -->
+		<EulerImplicitSolver name="default12" rayleighStiffness="0.01" />
+		<HighOrderTetrahedralCorotationalFEMForceField poissonRatio="0.49" youngModulus="10000"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="8" method="qr" /> 
+
+		
+		<VisualStyle displayFlags="showForceFields" />
+		<BoxROI name="ROIZL" box="-1 -1 -0.001 1 1 0.001" drawBoxes="false" />
+		<FixedConstraint indices="@ROIZL.indices" />
+		
+		<Node name="BezierTriangleTopology" >
+			<TriangleSetTopologyModifier />
+			<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    
+			<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../Container1" output="@ContainerTriangleBezier1"  />
+			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo1" drawControlPointsEdges="true" drawControlPoints="true" />        
+
+			<Node name="TriangleTopology">
+				<TriangleSetTopologyContainer name="triangulation1" />
+				<TriangleSetGeometryAlgorithms  />
+				<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier1" output="@triangulation1"/>
+				<MechanicalObject name="triangleDofs1" />
+				<Bezier2MeshMechanicalMapping input="@../../dofs1" mapForces="0" output="@triangleDofs1"/>
+
+				<Node name="VisualNode">
+					<OglModel name="VisualModel1" />
+					<Visual3DText text="Cubic Rational Bezier FEM" scale="0.1" position="-0.5 0 -0.1" />
+					<IdentityMapping input="@.." output="@VisualModel1" />
+				</Node>
+
+			</Node>                
+
+		</Node>
+	</Node>
+
+	<Node name="LagrangeTetrahedralCylinder" >
+		<GenerateBezierCylinder template="Vec3d" name="Cylinder2" origin="2 0 0" radius="0.2" height="1.0" resHeight="2" resCircumferential="3" resRadial="1" BezierTetrahedronDegree="3" />       
+		<HighOrderTetrahedronSetTopologyContainer name="Container2"  degree="@Cylinder2.BezierTetrahedronDegree" isRational="@Cylinder2.isBezierTetrahedronRational"   weights="@Cylinder2.BezierTetrahedronWeights" tetrahedra="@Cylinder2.tetrahedra" position="@Cylinder2.output_TetrahedraPosition"/>
+		<LagrangeTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
+		<MechanicalObject name="dofs2" rest_position="@Cylinder2.output_TetrahedraPosition"/>    
+
+		<CGLinearSolver iterations="500" name="linear solver" tolerance="1.0e-9" threshold="1.0e-9" /> 
+		<!--     <StaticSolver applyIncrementFactor="1" />  -->
+		<EulerImplicitSolver name="default12" rayleighStiffness="0.01" />
+		<HighOrderTetrahedralCorotationalFEMForceField poissonRatio="0.49" youngModulus="10000"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="8" method="qr" /> 
+
+		
+		<VisualStyle displayFlags="showForceFields" />
+		<BoxROI name="ROIZL2" box="1 -1 -0.001 3 1 0.001" drawBoxes="true" />
+		<FixedConstraint indices="@ROIZL2.indices" />
+		
+		<Node name="BezierTriangleTopology" >
+			<TriangleSetTopologyModifier />
+			<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier2"/>    
+			<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../Container2" output="@ContainerTriangleBezier2"  />
+			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo2" drawControlPointsEdges="true" drawControlPoints="true" />        
+
+			<Node name="TriangleTopology">
+				<TriangleSetTopologyContainer name="triangulation2" />
+				<TriangleSetGeometryAlgorithms  />
+				<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier2" output="@triangulation2"/>
+				<MechanicalObject name="triangleDofs2" />
+				<Bezier2MeshMechanicalMapping input="@../../dofs2" mapForces="0" output="@triangleDofs2"/>
+
+				<Node name="VisualNode">
+					<OglModel name="VisualModel2" color="255 0 0" />
+					<Visual3DText text="Cubic Rational Lagrange FEM" scale="0.1" position="1.5 0 -0.1" />
+					<IdentityMapping input="@.." output="@VisualModel2" />
+				</Node>
+
+			</Node>                
+
+		</Node>
+	</Node>
+
+</Node>
+
+
