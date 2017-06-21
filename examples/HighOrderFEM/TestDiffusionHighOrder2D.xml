@@ -18,8 +18,8 @@
 				<TriangleSetTopologyModifier   />
 				<HighOrderTriangleSetTopologyContainer name="ContainerBezier" />	
 		
-				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../triangleContainer" output="@ContainerBezier" bezierTriangleDegree="2" />
-				<MechanicalObject showObject="0" name="BezierMeca" template="Vec2d" />	
+				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../triangleContainer" output="@ContainerBezier" bezierTriangleDegree="3" />
+				<MechanicalObject showObject="0" name="bezierMeca" template="Vec2d" />	
 				<BezierTriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
 				<Node name="ElecNode" gravity="0 0 0"  >
 					<!-- ODE Solver -->
@@ -32,15 +32,15 @@
 					<MechanicalObject template="Vec1d" name="ElecObj" position="@init.outputsPotentiel" tags="EPModel"/>
 
 					<!-- Mass -->
-					<HighOrderMeshMatrixMass template="Vec1d" name="Mass" lumping="0" forceAffineAssemblyForAffineElements="0" massDensity="1" tags="mass"/>
+					<HighOrderMeshMatrixMass template="Vec1d" name="Mass" lumping="0" forceAffineAssemblyForAffineElements="1" massDensity="1" tags="mass"/>
 					
 					<!-- ForceField -->
-				<!-- <!-- 	<FisherKolmogorovCurrentField template="Vec1d" name="Reaction" Main_alpha="1.0" vertexVolume="@Mass.vertexMass"  tags="EPModel"/> 		 --> -->
-					<HighOrderTriangularDiffusionForceField template="Vec1d" name="Diffusion" printLog="0" forceAffineAssemblyForAffineElements="0" diffusivity="0.01"  integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="isotropy" anisotropyDirection="1 0 0" tags="EPModel" />
+				 <!-- 	<FisherKolmogorovCurrentField template="Vec1d" name="Reaction" Main_alpha="1.0" vertexVolume="@Mass.vertexMass"  tags="EPModel"/> 		 --> 
+					<HighOrderTriangularDiffusionForceField template="Vec1d" name="Diffusion" printLog="0" forceAffineAssemblyForAffineElements="0" diffusivity="-0.01"  integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="isotropy" anisotropyDirection="1 0 0" tags="EPModel" />
 
 					<!-- Constraint -->
-					<BoxROI name="box1" template="Vec2d" box="0.9 0.9 -0.1 1.1 1.1 0.4" drawBoxes="1" drawPoints="1" position="@../bezierMeca.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
-					<!-- <CardiacImpulseConstraint name="cardiacConstraint" indices="@box1.indices"  amplitude="100" endTime="0.0" tags="EPModel"/> -->
+					<BoxROI name="box1" template="Vec3d"  box="0.8 0.8 -0.1 1.2 1.2 0.4" drawBoxes="1" drawPoints="1" position="@../bezierMeca.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
+					<CardiacImpulseConstraint  name="cardiacConstraint" indices="@box1.indices"  amplitude="500" endTime="0.0" tags="EPModel"/>
 					<Node 	name="Surface" gravity="0 0 0" >
 						<TriangleSetTopologyContainer name="Container2" tags="surf"/>
 						<TriangleSetTopologyModifier name="ModifierSurface2" />
@@ -48,7 +48,7 @@
 						<MechanicalObject template="Vec2d" name="triangleDofs" />
 						<TriangleSetGeometryAlgorithms template="Vec2d" /> 
 					
-						<Bezier2MeshMechanicalMapping mapForces="0" input="@../../bezierMeca" output="@triangleDofs"/>
+						<Bezier2MeshMechanicalMapping  template="Vec2d,Vec2d" mapForces="0" input="@../../bezierMeca" output="@triangleDofs"/>
 					
 						<!--  Interpolated potential  -->
 						<Node 	name="InterpolatedPotential" gravity="0 0 0" >
@@ -57,9 +57,9 @@
 					
 							<Bezier2MeshMechanicalMapping mapForces="0" input="@../../ElecObj" output="@trianglePotentialDofs"/>
 							<Node 	name="visu" gravity="0 0 0"  >
-							<TextureInterpolation template="Vec1d" name="EngineInterpolation"  input_states="@../trianglePotentialDofs.position"  input_coordinates="@../../triangleDofs.position"  min_value="0"  max_value="1"  manual_scale="1"  drawPotentiels="0"  showIndicesScale="5e-05"  vertexPloted="1" />
-							<OglModel template="ExtVec3f" name="oglPotentiel"  texcoords="@EngineInterpolation.output_coordinates" texturename="texture/heatColor.bmp"  useVBO="0" />
-							<IdentityMapping template="Vec2d,ExtVec3d" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../../triangleDofs"  output="@oglPotentiel" />
+								<TextureInterpolation template="Vec1d" name="EngineInterpolation"  input_states="@../trianglePotentialDofs.position"  input_coordinates="@../../triangleDofs.position"  min_value="0"  max_value="100"  manual_scale="1"  drawPotentiels="0"  showIndicesScale="5e-05"  vertexPloted="1" />
+								<OglModel template="ExtVec3f" name="oglPotentiel"  texcoords="@EngineInterpolation.output_coordinates" texturename="texture/heatColor.bmp"  useVBO="0" />
+								<IdentityMapping template="Vec2d,ExtVec3f" name="default12"  mapForces="0"  mapConstraints="0"  mapMasses="0"  input="@../../triangleDofs"  output="@oglPotentiel" />
 							</Node>  <!-- visu-->
 						</Node> <!--  Interpolated potential  -->
 					</Node> <!-- Surface-->
