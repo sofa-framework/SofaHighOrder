@@ -41,11 +41,13 @@ int Bezier2MeshMechanicalMappingClass = core::RegisterObject("Mechanical mapping
 
 #ifndef SOFA_FLOAT
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3dTypes, Vec3dTypes >;
+template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec2dTypes, Vec2dTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1dTypes, Vec1dTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3dTypes, ExtVec3dTypes >;
 #endif
 #ifndef SOFA_DOUBLE
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3fTypes, Vec3fTypes >;
+template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec2fTypes, Vec2fTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3fTypes, ExtVec3fTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1fTypes, Vec1fTypes >;
 #endif
@@ -54,6 +56,8 @@ template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1fTy
 #ifndef SOFA_DOUBLE
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3dTypes, Vec3fTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3fTypes, Vec3dTypes >;
+template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec2fTypes, Vec2dTypes >;
+template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec2dTypes, Vec2fTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1dTypes, Vec1fTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec1fTypes, Vec1dTypes >;
 template class SOFA_HIGHORDER_TOPOLOGY_API Bezier2MeshMechanicalMapping< Vec3fTypes, ExtVec3dTypes >;
