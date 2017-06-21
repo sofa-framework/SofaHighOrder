@@ -672,8 +672,8 @@ void HighOrderTriangularDiffusionForceField<DataTypes>::computeTriangleStiffness
 		{
 			k=edgesInTriangleArray[j][0];
 			l=edgesInTriangleArray[j][1];
-			// the linear stiffness matrix using shape vectors and Lame coefficients
-			edgeStiffness[j]=diff*dot(shapeVector[l],shapeVector[k]);
+			// the linear stiffness matrix using shape vectors and diffusivity coefficients
+			edgeStiffness[j]= -diff*dot(shapeVector[l],shapeVector[k]);
 		}
 	} else {
 		Mat2x2 diff=diffusionTensor*fabs(volume)/2;
@@ -681,7 +681,7 @@ void HighOrderTriangularDiffusionForceField<DataTypes>::computeTriangleStiffness
 		{
 			k=edgesInTriangleArray[j][0];
 			l=edgesInTriangleArray[j][1];
-			edgeStiffness[j]=dot(shapeVector[l],diff*shapeVector[k]);
+			edgeStiffness[j]= -dot(shapeVector[l],diff*shapeVector[k]);
 		}
 	}
 }
