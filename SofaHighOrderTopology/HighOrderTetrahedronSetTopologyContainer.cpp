@@ -258,9 +258,9 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 	helper::ReadAccessor<Data<helper::vector< Triangle > > > inputTriangleArray = this->inputTriangles;
 	for (size_t i = 0; i < hoTriangleArray.size(); ++i)
 	{
-		size_t pointIndex=hoEdgeArray[i][0];
-		size_t triangleIndex=hoEdgeArray[i][1];
-		assert((hoEdgeArray[i][2]+hoEdgeArray[i][3]+hoEdgeArray[i][4])==degree);
+		size_t pointIndex= hoTriangleArray[i][0];
+		size_t triangleIndex= hoTriangleArray[i][1];
+		assert((hoTriangleArray[i][2]+ hoTriangleArray[i][3]+ hoTriangleArray[i][4])==degree);
 		Triangle t=inputTriangleArray[triangleIndex];
 		// now find a corresponding triangle in the set of triangles
 		int realTriangleIndex=this->getTriangleIndex(t[0],t[1],t[2]);
@@ -273,7 +273,7 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 				tvi[k]=
 				numbering[j]=k;
 			}
-			size_t offset=(hoEdgeArray[i][numbering[0]+2]-1)*(degree-1)+hoEdgeArray[i][numbering[1]+2]-1;
+			size_t offset=(hoTriangleArray[i][numbering[0]+2]-1)*(degree-1)+ hoTriangleArray[i][numbering[1]+2]-1;
 			ControlPointLocation cpl((TriangleID) realTriangleIndex,std::make_pair(TRIANGLE,offset));
 			locationToGlobalIndexMap.insert(std::pair<ControlPointLocation,size_t>(cpl,pointIndex));
 			globalIndexToLocationMap.insert(std::pair<size_t,ControlPointLocation>(pointIndex,cpl));
@@ -284,11 +284,11 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 	helper::ReadAccessor<Data<helper::vector< HighOrderTetrahedronPosition > > > hoTetrahedronArray = this->inputHighOrderTetrahedronPositions;
 	for (size_t i = 0; i < hoTetrahedronArray.size(); ++i)
 	{
-		size_t pointIndex=hoEdgeArray[i][0];
-		size_t tetrahedronIndex=hoEdgeArray[i][1];
-		assert((hoEdgeArray[i][2]+hoEdgeArray[i][3]+hoEdgeArray[i][4]+hoEdgeArray[i][5])==degree);
+		size_t pointIndex= hoTetrahedronArray[i][0];
+		size_t tetrahedronIndex= hoTetrahedronArray[i][1];
+		assert((hoTetrahedronArray[i][2]+ hoTetrahedronArray[i][3]+ hoTetrahedronArray[i][4]+ hoTetrahedronArray[i][5])==degree);
 		Triangle t=this->getTriangle(tetrahedronIndex);
-		TetrahedronIndexVector tiv(hoEdgeArray[i][2],hoEdgeArray[i][3],hoEdgeArray[i][4],hoEdgeArray[i][5]);
+		TetrahedronIndexVector tiv(hoTetrahedronArray[i][2], hoTetrahedronArray[i][3], hoTetrahedronArray[i][4], hoTetrahedronArray[i][5]);
 		OffsetMapIterator omi=edgeOffsetMap.find(tiv);
 		assert(omi!=edgeOffsetMap.end());
 		ControlPointLocation cpl(tetrahedronIndex,std::make_pair(TETRAHEDRON,(*omi).second));

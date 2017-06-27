@@ -227,11 +227,11 @@ void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 	helper::ReadAccessor<Data<helper::vector< HighOrderTrianglePosition > > > hoTriangleArray = this->inputHighOrderTrianglePositions;
 	for (size_t i = 0; i < hoTriangleArray.size(); ++i)
 	{
-		size_t pointIndex=hoEdgeArray[i][0];
-		size_t triangleIndex=hoEdgeArray[i][1];
-		assert((hoEdgeArray[i][2]+hoEdgeArray[i][3]+hoEdgeArray[i][4])==degree);
+		size_t pointIndex= hoTriangleArray[i][0];
+		size_t triangleIndex= hoTriangleArray[i][1];
+		assert((hoTriangleArray[i][2]+ hoTriangleArray[i][3]+ hoTriangleArray[i][4])==degree);
 		Triangle t=this->getTriangle(triangleIndex);
-		TriangleIndexVector tiv(hoEdgeArray[i][2],hoEdgeArray[i][3],hoEdgeArray[i][4]);
+		TriangleIndexVector tiv(hoTriangleArray[i][2], hoTriangleArray[i][3], hoTriangleArray[i][4]);
 		locationToGlobalIndexMap.insert(std::pair<HighOrderTriangleSetTopologyContainer::ControlPointLocation,size_t>(HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv),pointIndex));
 		globalIndexToLocationMap.insert(std::pair<size_t,HighOrderTriangleSetTopologyContainer::ControlPointLocation>(pointIndex,HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv)));
 	}
