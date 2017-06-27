@@ -31,6 +31,7 @@ set(HEADER_FILES
 	LagrangeTriangleSetGeometryAlgorithms.h
 	LagrangeTriangleSetGeometryAlgorithms.inl
 	HighOrderTopologyIndex.h
+	MeshHOMFLoader.h
 	)
 
 set(SOURCE_FILES
@@ -47,6 +48,7 @@ set(SOURCE_FILES
 	BezierTetrahedronSetGeometryAlgorithms.cpp
 	LagrangeTetrahedronSetGeometryAlgorithms.cpp
 	LagrangeTriangleSetGeometryAlgorithms.cpp
+	MeshHOMFLoader.cpp
 	)
 
 
