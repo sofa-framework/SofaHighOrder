@@ -36,7 +36,7 @@
 					
 					<!-- ForceField -->
 				 <!-- 	<FisherKolmogorovCurrentField template="Vec1d" name="Reaction" Main_alpha="1.0" vertexVolume="@Mass.vertexMass"  tags="EPModel"/> 		 --> 
-					<HighOrderTriangularDiffusionForceField template="Vec1d" name="Diffusion" printLog="0" forceAffineAssemblyForAffineElements="0" diffusivity="-0.01"  integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="isotropy" anisotropyDirection="1 0 0" tags="EPModel" />
+					<HighOrderTriangularDiffusionForceField template="Vec1d" name="Diffusion" printLog="0" forceAffineAssemblyForAffineElements="0" diffusivity="0.01"  integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="isotropy" anisotropyDirection="1 0 0" tags="EPModel" />
 
 					<!-- Constraint -->
 					<BoxROI name="box1" template="Vec3d"  box="0.8 0.8 -0.1 1.2 1.2 0.4" drawBoxes="1" drawPoints="1" position="@../bezierMeca.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
