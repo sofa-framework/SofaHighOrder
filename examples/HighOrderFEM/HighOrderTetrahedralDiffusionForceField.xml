@@ -20,7 +20,7 @@
 		
 				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container" output="@ContainerBezier" bezierTetrahedronDegree="2" />
 				<MechanicalObject name="bezierObj" showObject="0" showObjectScale="1" tags="BezierPosition" />	
-				<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="0"  drawEdges="0" drawColorEdges="1 0 0"/>
+				<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" template="Vec3d"  drawControlPoints="0"  drawEdges="0" drawColorEdges="1 0 0"/>
 
 				<Node name="ElecNode" gravity="0 0 0"  >
 					<!-- ODE Solver -->
@@ -36,12 +36,12 @@
 					<HighOrderMeshMatrixMass template="Vec1d" name="Mass" lumping="0" forceAffineAssemblyForAffineElements="0" massDensity="1" tags="mass"/>
 					
 					<!-- ForceField -->
-					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" printLog="1" diffusivity="0.01"  forceAffineAssemblyForAffineElements="0" integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="transverseIsotropy" anisotropyDirection="1 0 0" tags="EPModel" />
+					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" printLog="0" diffusivity="0.01"  forceAffineAssemblyForAffineElements="0" integrationMethod="analytical" numericalIntegrationMethod="3" anisotropyParameters="3" integrationOrder="3" anisotropy="transverseIsotropy" anisotropyDirection="1 0 0" tags="EPModel" />
 
 					<!-- Constraint -->
 					<BoxROI name="box1" template="Vec3d" box="0.9 0.9 -0.1 1.1 1.1 0.4" drawBoxes="1" drawPoints="1" position="@../bezierObj.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
 					<CardiacImpulseConstraint name="cardiacConstraint" indices="@box1.indices"  amplitude="100" endTime="0.0" tags="EPModel"/>
-
+					<HOMFFileExporter template="Vec3d"  name="fileExporter" filename="gridTetraDeg2.hom"  exportAtBegin="1" />
 					
 					<!-- Bezier Surface -->
 				   <Node 	name="BezierSurface"  >

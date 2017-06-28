@@ -19,7 +19,7 @@
 		<VisualStyle displayFlags="showForceFields" />
 		<BoxROI name="ROIZL" box="-1 -1 -0.001 1 1 0.001" drawBoxes="false" />
 		<FixedConstraint indices="@ROIZL.indices" />
-		
+	   <HOMFFileExporter template="Vec3d"  name="fileExporter" filename="CylinderTetraDeg3.hom"  overwrite="1" exportAtBegin="1" /> 
 		<Node name="BezierTriangleTopology" >
 			<TriangleSetTopologyModifier />
 			<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    

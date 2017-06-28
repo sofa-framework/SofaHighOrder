@@ -18,7 +18,7 @@
 				<TriangleSetTopologyModifier   />
 				<HighOrderTriangleSetTopologyContainer name="ContainerBezier" />	
 		
-				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../triangleContainer" output="@ContainerBezier" bezierTriangleDegree="3" />
+				<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../triangleContainer" output="@ContainerBezier" bezierTriangleDegree="4" />
 				<MechanicalObject showObject="0" name="bezierMeca" template="Vec2d" />	
 				<BezierTriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
 				<Node name="ElecNode" gravity="0 0 0"  >
@@ -41,6 +41,7 @@
 					<!-- Constraint -->
 					<BoxROI name="box1" template="Vec3d"  box="0.8 0.8 -0.1 1.2 1.2 0.4" drawBoxes="1" drawPoints="1" position="@../bezierMeca.position" computeTriangles="0" computeTetrahedra="0" computeEdges="0" drawTriangles="0" tags="laReaction laDiffusion"/>
 					<CardiacImpulseConstraint  name="cardiacConstraint" indices="@box1.indices"  amplitude="500" endTime="0.0" tags="EPModel"/>
+					<HOMFFileExporter template="Vec2d"  name="fileExporter" filename="gridTrianglesDeg4.hom"  exportAtBegin="1" />
 					<Node 	name="Surface" gravity="0 0 0" >
 						<TriangleSetTopologyContainer name="Container2" tags="surf"/>
 						<TriangleSetTopologyModifier name="ModifierSurface2" />
