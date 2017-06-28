@@ -39,11 +39,11 @@ public:
 	typedef BaseMeshTopology::Triangle	        	         Triangle;
 	typedef BaseMeshTopology::SeqTriangles	        	      SeqTriangles;
 	typedef BaseMeshTopology::EdgesInTriangle	         	EdgesInTriangle;
-	typedef BaseMeshTopology::TrianglesAroundVertex    	TrianglesAroundVertex;
+	typedef BaseMeshTopology::TrianglesAroundVertex    	    TrianglesAroundVertex;
 	typedef BaseMeshTopology::TrianglesAroundEdge        	TrianglesAroundEdge;
 	typedef sofa::helper::vector<TriangleID>                  VecTriangleID;
 	typedef sofa::helper::vector<PointID>					  VecPointID;
-	typedef sofa::defaulttype::Vec<2,HighOrderDegreeType>		EdgeIndexVector;
+
 
 	typedef sofa::defaulttype::Vec<3,int> ElementTriangleIndex;
 	typedef sofa::defaulttype::Vec<3,size_t> LocalTriangleIndex;
