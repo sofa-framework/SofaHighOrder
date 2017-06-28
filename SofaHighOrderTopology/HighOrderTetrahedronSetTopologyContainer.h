@@ -138,11 +138,11 @@ public :
 	void getLocationFromGlobalIndex(const size_t globalIndex, HighOrderTetrahedronPointLocation &location, 
 		size_t &elementIndex, size_t &elementOffset) ;
 		/// convert the edge offset into a EdgeIndex
-	void getEdgeIndexFromEdgeOffset(size_t offset, EdgeIndexVector &ebi);
+	void getEdgeIndexVectorFromEdgeOffset(size_t offset, EdgeIndexVector &ebi);
 	/// convert the triangle offset into a TriangleIndex
-	void getTriangleIndexFromTriangleOffset(size_t offset, TriangleIndexVector &tbi);
+	void getTriangleIndexVectorFromTriangleOffset(size_t offset, TriangleIndexVector &tbi);
 	/// convert the tetrahedron offset into a TriangleIndex
-	void getTetrahedronIndexFromTetrahedronOffset(size_t offset, TetrahedronIndexVector &tbi);
+	void getTetrahedronIndexVectorFromTetrahedronOffset(size_t offset, TetrahedronIndexVector &tbi);
 	/// check the control Point Topology
 	virtual bool checkHighOrderTetrahedronTopology();
 	/** \brief Returns the weight coordinate of the ith DOF. */
