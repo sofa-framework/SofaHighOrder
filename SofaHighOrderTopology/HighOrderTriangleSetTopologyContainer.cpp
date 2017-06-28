@@ -124,21 +124,10 @@ void HighOrderTriangleSetTopologyContainer::reinit()
 			}
 
 		}
-		// initialize the array of weights if necessary
-		if (d_weightArray.getValue().empty()){
-				helper::WriteOnlyAccessor<Data <SeqWeights> >  wa=d_weightArray;
-				wa.resize(this->getNbPoints());
-				std::fill(wa.begin(),wa.end(),(SReal)1);
-			}
-		// initialize the array of boolean indicating if the nature of the Bezier triangle if necessary
-		if ((d_isRationalSpline.getValue().empty()) && (getNumberOfTriangles()>0)){
-			helper::WriteOnlyAccessor<Data <SeqBools> >  isRationalSpline=d_isRationalSpline;
-			isRationalSpline.resize(this->getNumberOfTriangles());
-			std::fill(isRationalSpline.begin(),isRationalSpline.end(),false);
-		}
+		
 		// manually creates the edge and triangle structures.
-		createEdgeSetArray();
-		createEdgesInTriangleArray();
+        createEdgeSetArray();
+        createEdgesInTriangleArray();
 	}
 	if (inputHighOrderEdgePositions.getValue().size()>0)
 		parseInputData();
@@ -166,9 +155,35 @@ void HighOrderTriangleSetTopologyContainer::reinit()
 		getGlobalIndexArrayOfControlPointsInTriangle(i,indexArray);
 		triangleDOFArray.push_back(indexArray);
 	}
+    // initialize the array of weights if necessary
+    if ((d_isRationalSpline.getValue().empty()) && (getNumberOfTriangles()>0)) {
+        helper::WriteOnlyAccessor<Data <SeqBools> >  isRationalSpline = d_isRationalSpline;
+        isRationalSpline.resize(this->getNumberOfTriangles());
+        if (d_weightArray.getValue().empty()) {
+            SeqWeights &wa = *(d_weightArray.beginEdit());
+            wa.resize(this->getNbPoints());
+            std::fill(wa.begin(), wa.end(), (SReal)1);
+            d_weightArray.endEdit();
+            // if no weights are provided then all tetrahedra are integral
+            std::fill(isRationalSpline.begin(), isRationalSpline.end(), false);
+        }
+        else {
+            size_t j;
+            const SeqWeights &wa = d_weightArray.getValue();
+            // if weights are provided triangles having one weight different from 1 are label as rational.
+            const sofa::helper::vector<Triangle> &tta = getTriangleArray();
+            for (i = 0; i < tta.size(); ++i) {
+                isRationalSpline[i] = false;
+                getGlobalIndexArrayOfControlPointsInTriangle(i, indexArray);
+                for (j = 0; j < indexArray.size(); ++j) {
+                    if (wa[indexArray[j]] != (SReal)1.0)
+                        isRationalSpline[i] = true;
+                }
+            }
+        }
+    }
 
-
-	checkHighOrderTriangleTopology();
+//	checkHighOrderTriangleTopology();
 }
 void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 	std::set<size_t> vertexSet;

@@ -164,20 +164,9 @@ void HighOrderTetrahedronSetTopologyContainer::reinit()
 				}
 			}
 		}
-		// initialize the array of weights if necessary
 
-		if (d_weightArray.getValue().empty()){
 
-			SeqWeights &wa=*(d_weightArray.beginEdit());
-			wa.resize(this->getNbPoints());
-			std::fill(wa.begin(),wa.end(),(SReal)1);
-			d_weightArray.endEdit();
-		}
-		if (d_isRationalSpline.getValue().empty()){
-			helper::WriteOnlyAccessor<Data <SeqBools> >  isRationalSpline=d_isRationalSpline;
-			isRationalSpline.resize(this->getNbPoints());
-			std::fill(isRationalSpline.begin(),isRationalSpline.end(),false);
-		}
+
 		// manually creates the edge and triangle structures.
 		createTriangleSetArray();
 		createEdgeSetArray();
@@ -210,8 +199,34 @@ void HighOrderTetrahedronSetTopologyContainer::reinit()
 		getGlobalIndexArrayOfControlPointsInTetrahedron(i,indexArray);
 		tetrahedronDOFArray.push_back(indexArray);
 	}
-
-//	checkHighOrderTetrahedronTopology();
+    // initialize the array of weights if necessary
+    if (d_isRationalSpline.getValue().empty()) {
+        helper::WriteOnlyAccessor<Data <SeqBools> >  isRationalSpline = d_isRationalSpline;
+        isRationalSpline.resize(this->getNbTetrahedra());
+        if (d_weightArray.getValue().empty()) {
+            SeqWeights &wa = *(d_weightArray.beginEdit());
+            wa.resize(this->getNbPoints());
+            std::fill(wa.begin(), wa.end(), (SReal)1);
+            d_weightArray.endEdit();
+            // if no weights are provided then all tetrahedra are integral
+            std::fill(isRationalSpline.begin(), isRationalSpline.end(), false);
+        }
+        else {
+            size_t j;
+            const SeqWeights &wa = d_weightArray.getValue();
+            // if weights are provided tetrahedra having one weight different from 1 are label as rational.
+            const sofa::helper::vector<Tetrahedron> &tta = getTetrahedronArray();
+            for (i = 0; i < tta.size(); ++i) {
+                isRationalSpline[i] = false;
+                getGlobalIndexArrayOfControlPointsInTetrahedron(i, indexArray);
+                for (j = 0; j < indexArray.size(); ++j) {
+                    if (wa[indexArray[j]] != (SReal)1.0)
+                        isRationalSpline[i] = true;
+                }
+            }
+        }
+    }
+	checkHighOrderTetrahedronTopology();
 }
 void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 
@@ -264,16 +279,21 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 		Triangle t=inputTriangleArray[triangleIndex];
 		// now find a corresponding triangle in the set of triangles
 		int realTriangleIndex=this->getTriangleIndex(t[0],t[1],t[2]);
+        assert(realTriangleIndex >= 0);
 		if (realTriangleIndex>=0) {
 			size_t numbering[3];
 			Triangle t2=this->getTriangle((TriangleID) realTriangleIndex); 
-			TetrahedronIndexVector tvi;
+			TriangleIndexVector tvi;
 			for (j=0;j<3;++j) {
 				for(k=0;t[k]!=t2[j];++k);
-				tvi[k]=
+                tvi[j] = hoTriangleArray[i][2 + k];
 				numbering[j]=k;
 			}
-			size_t offset=(hoTriangleArray[i][numbering[0]+2]-1)*(degree-1)+ hoTriangleArray[i][numbering[1]+2]-1;
+            size_t offset;
+            for (offset = 0; (offset<offsetToTriangleIndexArray.size()) && (offsetToTriangleIndexArray[offset] != tvi); ++offset);
+            assert(offset < offsetToTriangleIndexArray.size());
+
+//			size_t offset=(hoTriangleArray[i][numbering[0]+2]-1)*(degree-1)+ hoTriangleArray[i][numbering[1]+2]-1;
 			ControlPointLocation cpl((TriangleID) realTriangleIndex,std::make_pair(TRIANGLE,offset));
 			locationToGlobalIndexMap.insert(std::pair<ControlPointLocation,size_t>(cpl,pointIndex));
 			globalIndexToLocationMap.insert(std::pair<size_t,ControlPointLocation>(pointIndex,cpl));
@@ -287,10 +307,10 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 		size_t pointIndex= hoTetrahedronArray[i][0];
 		size_t tetrahedronIndex= hoTetrahedronArray[i][1];
 		assert((hoTetrahedronArray[i][2]+ hoTetrahedronArray[i][3]+ hoTetrahedronArray[i][4]+ hoTetrahedronArray[i][5])==degree);
-		Triangle t=this->getTriangle(tetrahedronIndex);
+		Tetrahedron t=this->getTetrahedron(tetrahedronIndex);
 		TetrahedronIndexVector tiv(hoTetrahedronArray[i][2], hoTetrahedronArray[i][3], hoTetrahedronArray[i][4], hoTetrahedronArray[i][5]);
-		OffsetMapIterator omi=edgeOffsetMap.find(tiv);
-		assert(omi!=edgeOffsetMap.end());
+		OffsetMapIterator omi=tetrahedronOffsetMap.find(tiv);
+		assert(omi!= tetrahedronOffsetMap.end());
 		ControlPointLocation cpl(tetrahedronIndex,std::make_pair(TETRAHEDRON,(*omi).second));
 		locationToGlobalIndexMap.insert(std::pair<ControlPointLocation,size_t>(cpl,pointIndex));
 		globalIndexToLocationMap.insert(std::pair<size_t,ControlPointLocation>(pointIndex,cpl));	
@@ -666,16 +686,16 @@ void HighOrderTetrahedronSetTopologyContainer::getLocationFromGlobalIndex(const 
 		elementOffset=((*itcpl).second).second.second;
 	}
 }
-void HighOrderTetrahedronSetTopologyContainer::getEdgeIndexFromEdgeOffset(size_t offset, EdgeIndexVector &ebi){
+void HighOrderTetrahedronSetTopologyContainer::getEdgeIndexVectorFromEdgeOffset(size_t offset, EdgeIndexVector &ebi){
 	assert(offset<d_degree.getValue());
 	ebi[0]=offset+1;
 	ebi[1]=d_degree.getValue()-offset-1;
 }
-void HighOrderTetrahedronSetTopologyContainer::getTriangleIndexFromTriangleOffset(size_t offset, TriangleIndexVector &tbi){
+void HighOrderTetrahedronSetTopologyContainer::getTriangleIndexVectorFromTriangleOffset(size_t offset, TriangleIndexVector &tbi){
     assert(offset<(size_t)((d_degree.getValue()-1)*(d_degree.getValue()-2)/2));
 	tbi=offsetToTriangleIndexArray[offset];
 }
-void HighOrderTetrahedronSetTopologyContainer::getTetrahedronIndexFromTetrahedronOffset(size_t offset, TetrahedronIndexVector &tbi){
+void HighOrderTetrahedronSetTopologyContainer::getTetrahedronIndexVectorFromTetrahedronOffset(size_t offset, TetrahedronIndexVector &tbi){
     assert(offset<(size_t)((d_degree.getValue()-1)*(d_degree.getValue()-2)*(d_degree.getValue()-3)/6));
 	tbi=offsetToTetrahedronIndexArray[offset];
 }
