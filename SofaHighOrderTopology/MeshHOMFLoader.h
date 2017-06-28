@@ -37,6 +37,7 @@ public:
 
 protected:
 
+    MeshHOMFLoader();
     bool readHOMF(std::ifstream &file, const unsigned int homfFormat);
 
     void addPosition2D(helper::vector< sofa::defaulttype::Vec<2, SReal> >* pPositions, const sofa::defaulttype::Vec<2, SReal> &p);

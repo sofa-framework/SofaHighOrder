@@ -22,6 +22,16 @@ int MeshHOMFLoaderClass = core::RegisterObject("Specific mesh loader for HOMF fi
         .add< MeshHOMFLoader >()
         ;
 
+MeshHOMFLoader::MeshHOMFLoader() : MeshLoader()
+, d_positions2D(initData(&d_positions2D, "position2D", "Array of 2d positions of control points"))
+, d_weights(initData(&d_weights, "weights", "Array of weights for rational splines"))
+, d_degree(initData(&d_degree, "degree", "degree of spline mesh"))
+{
+    d_positions2D.setPersistent(false);
+    d_weights.setPersistent(false);
+    d_degree.setPersistent(false);
+}
+
 bool MeshHOMFLoader::load()
 {
     sout << "Loading HOMF file: " << m_filename << sendl;
@@ -39,11 +49,10 @@ bool MeshHOMFLoader::load()
 
     // -- Looking for HOMF version of this file.
     std::getline(file, cmd); //Version
-    std::istringstream versionReader(cmd);
-    string version;
-    versionReader >> version;
-    if (version.compare(0, 12, "HOMF Version") == 0) {
-        homfFormat = std::stoi(version.substr(14, 1));
+
+    if (cmd.compare(0, 12, "HOMF Version") == 0) {
+        string version = cmd.substr(13, 1);
+        homfFormat = std::stoi(version);
         if (homfFormat > 1) {
             serr << "Wrong version number "<< homfFormat<< ". Closing File" << sendl;
             file.close();
@@ -97,8 +106,8 @@ bool MeshHOMFLoader::readHOMF(std::ifstream &file, const unsigned int homfFormat
         file.close();
         return false;
     }
-    bool rationalMesh = false;
-    file >> rationalMesh;
+    bool rationalMesh = true;
+  
     // the number of coordinates to be read
     size_t numberInputCoordinates = dimensionEmbedding + (rationalMesh == true);
 
@@ -129,6 +138,7 @@ bool MeshHOMFLoader::readHOMF(std::ifstream &file, const unsigned int homfFormat
         }
         if (dimensionEmbedding == 2) {
             my_positions2D.push_back(Vector2(x, y));
+            my_positions.push_back(Vector3(x, y,0));
         }
         else {
             my_positions.push_back(Vector3(x, y, z));
@@ -144,15 +154,6 @@ bool MeshHOMFLoader::readHOMF(std::ifstream &file, const unsigned int homfFormat
     d_positions.endEdit();
     d_positions2D.endEdit();
     d_weights.endEdit();
-
-    unsigned int nelems = 0;
-
-
-    unsigned int nlines = 0;
-    unsigned int ntris = 0;
-    unsigned int nquads = 0;
-    unsigned int ntetrahedra = 0;
-    unsigned int ncubes = 0;
 
 
     // --- Loading Simplices of macro simplicial mesh ---
