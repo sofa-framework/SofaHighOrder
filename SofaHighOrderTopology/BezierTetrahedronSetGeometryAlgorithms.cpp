@@ -37,19 +37,12 @@ int BezierTetrahedronSetGeometryAlgorithmsClass = core::RegisterObject("Bezier T
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec3dTypes>;
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec2dTypes>;
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec1dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec3dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec2dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec1dTypes>;
 #endif
 
 #ifndef SOFA_DOUBLE
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec3fTypes>;
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec2fTypes>;
 template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec1fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec3fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec2fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API HighOrderTetrahedronSetGeometryAlgorithms<Vec1fTypes>;
-
 #endif
 
 } // namespace topology
