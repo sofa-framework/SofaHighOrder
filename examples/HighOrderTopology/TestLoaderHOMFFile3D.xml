@@ -1,0 +1,29 @@
+<Node name="Root" gravity="0 0 0" dt="0.05" displayFlags="showVisualModels hideBehaviorModels hideCollisionModels hideBoundingCollisionModels hideMappings hideMechanicalMappings hideForceFields hideInteractionForceFields">
+	<RequiredPlugin name="SofaHighOrderTopology plugin" pluginName="SofaHighOrderTopology" />
+    <RequiredPlugin name="SofaHighOrderFEM plugin" pluginName="SofaHighOrderFEM" />	
+
+	<Node name="MecaNode" gravity="0 0 0">
+        <MeshHOMFLoader name="HOMFLoader" filename="mesh/SphereTetraIcosahedronDeg4.hom" />
+		<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier"  position="@HOMFLoader.position" tetrahedra="@HOMFLoader.tetrahedra" inputHighOrderEdges="@HOMFLoader.edges" inputHighOrderTriangles="@HOMFLoader.triangles"  inputHighOrderEdgePositions="@HOMFLoader.highOrderEdgePositions"  inputHighOrderTrianglePositions="@HOMFLoader.highOrderTrianglePositions"  weights="@HOMFLoader.weights" inputHighOrderTetrahedronPositions="@HOMFLoader.highOrderTetrahedronPositions"  degree="@HOMFLoader.degree" />	
+		<MechanicalObject showObject="0" name="BezierMeca" template="Vec3d" />	
+		<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" template="Vec3d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
+		<Node name="BezierTriangleTopology" >
+			<TriangleSetTopologyModifier />
+			<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    
+			<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../ContainerBezier" output="@ContainerTriangleBezier1" useSurfaceExtrapolation="1"  />
+			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo1" drawControlPointsEdges="true" drawControlPoints="true" />   
+				<Node name="TriangleTopology">
+					<TriangleSetTopologyContainer name="triangulation1" />
+					<TriangleSetGeometryAlgorithms  />
+					<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier1" output="@triangulation1"/>
+					<MechanicalObject name="triangleDofs1" />
+					<Bezier2MeshMechanicalMapping input="@../../BezierMeca" mapForces="0" output="@triangleDofs1"/>
+
+					<Node name="VisualNode">
+						<OglModel name="VisualModel1" />
+						<IdentityMapping input="@.." output="@VisualModel1" />
+					</Node>
+				</Node>  
+			</Node>  
+	</Node> <!-- meca -->
+</Node> <!-- root -->

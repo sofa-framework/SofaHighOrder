@@ -10,7 +10,7 @@
 	<HighOrderTetrahedronSetTopologyContainer name="Container1"  degree="@Sphere1.BezierTetrahedronDegree" isRational="@Sphere1.isBezierTetrahedronRational"   weights="@Sphere1.BezierTetrahedronWeights" tetrahedra="@Sphere1.tetrahedra" position="@Sphere1.output_TetrahedraPosition"/>
 	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
 	<MechanicalObject name="dofs1" rest_position="@Sphere1.output_TetrahedraPosition"/>    
-
+	<!-- <HOMFFileExporter template="Vec3d"  name="fileExporter" filename="SphereTetraDeg4.hom"  overwrite="1" exportAtBegin="1" />  -->
 	<Node name="BezierTriangleTopology" >
 		<TriangleSetTopologyModifier />
 		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    
@@ -39,7 +39,7 @@
 	<HighOrderTetrahedronSetTopologyContainer name="Container2"  degree="@Sphere2.BezierTetrahedronDegree" isRational="@Sphere2.isBezierTetrahedronRational"   weights="@Sphere2.BezierTetrahedronWeights" tetrahedra="@Sphere2.tetrahedra" position="@Sphere2.output_TetrahedraPosition"/>
 	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
 	<MechanicalObject name="dofs2" rest_position="@Sphere2.output_TetrahedraPosition"/>    
-
+	<!-- <HOMFFileExporter template="Vec3d"  name="fileExporter" filename="SphereTetraOctahedronDeg4.hom"  overwrite="1" exportAtBegin="1" />  -->
 	<Node name="BezierTriangleTopology" >
 		<TriangleSetTopologyModifier />
 		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier2"/>    
@@ -68,7 +68,7 @@
 	<HighOrderTetrahedronSetTopologyContainer name="Container3"  degree="@Sphere3.BezierTetrahedronDegree" isRational="@Sphere3.isBezierTetrahedronRational"   weights="@Sphere3.BezierTetrahedronWeights" tetrahedra="@Sphere3.tetrahedra" position="@Sphere3.output_TetrahedraPosition"/>
 	<BezierTetrahedronSetGeometryAlgorithms  drawControlPointsEdges="0" drawControlPoints="0" drawSmoothEdges="0"/>
 	<MechanicalObject name="dofs3" rest_position="@Sphere3.output_TetrahedraPosition"/>    
-
+	<!-- <HOMFFileExporter template="Vec3d"  name="fileExporter" filename="SphereTetraIcosahedronDeg4.hom"  overwrite="1" exportAtBegin="1" />  -->
 	<Node name="BezierTriangleTopology" >
 		<TriangleSetTopologyModifier />
 		<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier3"/>    
