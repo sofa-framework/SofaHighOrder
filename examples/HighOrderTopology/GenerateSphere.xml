@@ -20,7 +20,7 @@
 		<Node name="TriangleTopology">
 			<TriangleSetTopologyContainer name="triangulation1" />
 			<TriangleSetGeometryAlgorithms  />
-			<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="5" input="@../ContainerTriangleBezier1" output="@triangulation1"/>
+			<HighOrder2MeshTopologicalMapping tesselatedTriangleDegree="7" input="@../ContainerTriangleBezier1" output="@triangulation1"/>
 			<MechanicalObject name="triangleDofs1" />
 			<Bezier2MeshMechanicalMapping input="@../../dofs1" mapForces="0" output="@triangleDofs1"/>
 
