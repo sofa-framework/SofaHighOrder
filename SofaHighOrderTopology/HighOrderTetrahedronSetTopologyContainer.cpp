@@ -226,7 +226,7 @@ void HighOrderTetrahedronSetTopologyContainer::reinit()
             }
         }
     }
-	checkHighOrderTetrahedronTopology();
+//	checkHighOrderTetrahedronTopology();
 }
 void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 
@@ -258,7 +258,7 @@ void HighOrderTetrahedronSetTopologyContainer::parseInputData()  {
 		assert(realEdgeIndex>=0);
 		if (realEdgeIndex>=0) {
 			size_t offset;
-			if (v0==inputEdgeArray[edgeIndex][0]) {
+			if (v0!=inputEdgeArray[edgeIndex][0]) {
 				offset=degree-hoEdgeArray[i][2]-1;
 			} else {
 				offset=degree-hoEdgeArray[i][3]-1;
@@ -428,7 +428,7 @@ size_t HighOrderTetrahedronSetTopologyContainer::getGlobalIndexOfControlPoint(co
     return (0);
 }
 
-TetrahedronIndexVector HighOrderTetrahedronSetTopologyContainer::getTetrahedronIndex(const size_t localIndex) const
+TetrahedronIndexVector HighOrderTetrahedronSetTopologyContainer::getTetrahedronIndexVector(const size_t localIndex) const
 {
 	
 	if (localIndex<tetrahedronIndexArray.size()) {
@@ -441,7 +441,7 @@ TetrahedronIndexVector HighOrderTetrahedronSetTopologyContainer::getTetrahedronI
 		return (id);
 	}
 }
-size_t HighOrderTetrahedronSetTopologyContainer::getLocalIndexFromTetrahedronIndex(const TetrahedronIndexVector id) const {
+size_t HighOrderTetrahedronSetTopologyContainer::getLocalIndexFromTetrahedronIndexVector(const TetrahedronIndexVector id) const {
 	OffsetMapConstIterator omi=localIndexMap.find(id);
 	if (omi==localIndexMap.end())
 	{
@@ -520,11 +520,49 @@ sofa::helper::vector<HighOrderTetrahedronSetTopologyContainer::LocalTetrahedronI
 		LocalTetrahedronIndex correspondance;
 		for (j=0;j<4;++j) {
 			tbi=tbiDerivArray[i]+tbiLinearArray[j];
-			correspondance[j]=getLocalIndexFromTetrahedronIndex(tbi);
+			correspondance[j]=getLocalIndexFromTetrahedronIndexVector(tbi);
 		}
 		correspondanceArray.push_back(correspondance);
 	}
 	return(correspondanceArray);
+}
+bool HighOrderTetrahedronSetTopologyContainer::getGlobalIndexFromLocation(const HighOrderTetrahedronPointLocation location,
+    const size_t elementIndex, const size_t elementOffset, size_t &globalIndex) {
+    HighOrderDegreeType degree = d_degree.getValue();
+    if (locationToGlobalIndexMap.size() > 0) {
+        ControlPointLocation cpl(elementIndex, std::make_pair(location, elementOffset));
+        if (locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end()) {
+            globalIndex = locationToGlobalIndexMap[cpl];
+            return(true);
+        }
+        else {
+            return(false);
+        }
+    }
+    else {
+        if (location == POINT) {
+            globalIndex = elementIndex;
+        }
+        else  if (location == EDGE) {
+            globalIndex = getNumberOfTetrahedralPoints() + elementIndex * (degree - 1) + elementOffset;
+        }
+        else  if (location == TRIANGLE) {
+            size_t pointsPerTriangle = (degree - 1)*(degree - 2) / 2;
+            globalIndex = getNumberOfTetrahedralPoints() + getNumberOfEdges() * (degree - 1) + pointsPerTriangle*elementIndex+elementOffset;
+
+        }
+        else  if (location == TETRAHEDRON) {
+            size_t pointsPerTriangle = (degree - 1)*(degree - 2) / 2;
+            size_t pointsPerTetrahedron = (degree - 1)*(degree - 2)*(degree - 3) / 6;
+            globalIndex = getNumberOfTetrahedralPoints() + getNumberOfEdges() * (degree - 1) + pointsPerTriangle*getNumberOfTriangles() +
+                pointsPerTetrahedron*elementIndex+elementOffset;
+        }
+        else {
+            return(false);
+        }
+        return(true);
+    }
+
 }
 void HighOrderTetrahedronSetTopologyContainer::getGlobalIndexArrayOfControlPointsInTetrahedron(const TetraID tetrahedronIndex, VecPointID & indexArray)
 {
@@ -686,6 +724,51 @@ void HighOrderTetrahedronSetTopologyContainer::getLocationFromGlobalIndex(const 
 		elementOffset=((*itcpl).second).second.second;
 	}
 }
+
+void HighOrderTetrahedronSetTopologyContainer::createElementsOnBorder()
+{
+    TetrahedronSetTopologyContainer::createElementsOnBorder();
+
+
+    HighOrderDegreeType degree = d_degree.getValue();
+    if (degree > 1) {
+        sofa::helper::vector <EdgeID>::iterator ite;
+        size_t i;
+        std::map<ControlPointLocation, size_t>::iterator itIndex;
+        // add edge control points in the border
+        HighOrderTetrahedronPointLocation loc = HighOrderTetrahedronSetTopologyContainer::EDGE;
+        typedef std::pair< HighOrderTetrahedronPointLocation, size_t> pairLocOffset;
+        for (ite = m_edgesOnBorder.begin(); ite != m_edgesOnBorder.end(); ite++) {
+            // find all degree-1 control points lying on the edge
+            for (i = 0; i < (degree - 1); ++i) {
+                ControlPointLocation cpl((*ite), pairLocOffset(loc, i));
+                itIndex=locationToGlobalIndexMap.find(cpl);
+                assert(itIndex != locationToGlobalIndexMap.end());
+                m_pointsOnBorder.push_back((*itIndex).second);
+            }
+        }
+        if (degree > 2) {
+            sofa::helper::vector <TriangleID>::iterator itr;
+            // add triangle control points in the border
+            HighOrderTetrahedronPointLocation loc = HighOrderTetrahedronSetTopologyContainer::TRIANGLE;
+            size_t nbOffsets = (degree - 1)*(degree - 2) / 2;
+            typedef std::pair< HighOrderTetrahedronPointLocation, size_t> pairLocOffset;
+            for (itr = m_trianglesOnBorder.begin(); itr != m_trianglesOnBorder.end(); itr++) {
+                // find all degree-1 control points lying on the triangle
+                for (i = 0; i <nbOffsets; ++i) {
+                    ControlPointLocation cpl((*itr), pairLocOffset(loc, i));
+                    itIndex = locationToGlobalIndexMap.find(cpl);
+                    assert(itIndex != locationToGlobalIndexMap.end());
+                    m_pointsOnBorder.push_back((*itIndex).second);
+                }
+            }
+
+        }
+
+    }
+
+}
+
 void HighOrderTetrahedronSetTopologyContainer::getEdgeIndexVectorFromEdgeOffset(size_t offset, EdgeIndexVector &ebi){
 	assert(offset<d_degree.getValue());
 	ebi[0]=offset+1;
@@ -708,6 +791,8 @@ bool HighOrderTetrahedronSetTopologyContainer::checkHighOrderTetrahedronTopology
 	sofa::helper::vector<TetrahedronIndexVector> tbiArray=getTetrahedronIndexArray();
 	VecPointID indexArray;
 	HighOrderTetrahedronPointLocation location; 
+    size_t globalIndex,val;
+    bool ret;
     size_t elementIndex, elementOffset/*,localIndex*/;
 	for (nTetras=0;nTetras<getNumberOfTetrahedra();++nTetras) {
 		indexArray.clear();
@@ -715,13 +800,13 @@ bool HighOrderTetrahedronSetTopologyContainer::checkHighOrderTetrahedronTopology
 		// check the number of control points per tetrahedron is correct
         assert(indexArray.size()==(size_t)((4+6*(degree-1)+2*(degree-1)*(degree-2)+(degree-1)*(degree-2)*(degree-3)/6)));
 		for(elem=0;elem<indexArray.size();++elem) {
-			size_t globalIndex=getGlobalIndexOfControlPoint(nTetras,tbiArray[elem]);
+			globalIndex=getGlobalIndexOfControlPoint(nTetras,tbiArray[elem]);
 			// check that getGlobalIndexOfControlPoint and getGlobalIndexArrayOfBezierPointsInTetrahedron give the same answer
 			assert(globalIndex==indexArray[elem]);
 #ifndef NDEBUG
-            TetrahedronIndexVector tbi=getTetrahedronIndex(elem);
+            TetrahedronIndexVector tbi=getTetrahedronIndexVector(elem);
 #endif
-			assert(elem==getLocalIndexFromTetrahedronIndex(tbi));
+			assert(elem==getLocalIndexFromTetrahedronIndexVector(tbi));
 			// check that getTetrahedronIndexVector is consistant with getTetrahedronIndexVectorArray
 			assert(tbiArray[elem][0]==tbi[0]);
 			assert(tbiArray[elem][1]==tbi[1]);
@@ -733,10 +818,16 @@ bool HighOrderTetrahedronSetTopologyContainer::checkHighOrderTetrahedronTopology
 				assert(location==POINT);
 				assert(elementIndex==getTetrahedron(nTetras)[elem]);
 				assert(elementOffset==0);
+                ret=getGlobalIndexFromLocation(location, elementIndex, elementOffset, val);
+                assert(ret);
+                assert(globalIndex == val);
 			}
 			else if (elem<(size_t)(4+6*(degree-1))){
 				assert(location==EDGE);
 				assert(elementIndex==getEdgesInTetrahedron(nTetras)[(elem-4)/(degree-1)]);
+                ret = getGlobalIndexFromLocation(location, elementIndex, elementOffset, val);
+                assert(ret);
+                assert(globalIndex == val);
 			}
 			else if (elem<(size_t)(4+6*(degree-1)+2*(degree-1)*(degree-2))){
                 assert(location==TRIANGLE);
@@ -745,6 +836,9 @@ bool HighOrderTetrahedronSetTopologyContainer::checkHighOrderTetrahedronTopology
                 size_t val=(elem-4-6*(degree-1))/(nbPointPerEdge);
 #endif
 				assert(elementIndex==getTrianglesInTetrahedron(nTetras)[val]);
+                ret = getGlobalIndexFromLocation(location, elementIndex, elementOffset, val);
+                assert(ret);
+                assert(globalIndex == val);
 			}
 		}
 

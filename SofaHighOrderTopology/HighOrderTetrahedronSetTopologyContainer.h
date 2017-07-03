@@ -121,10 +121,13 @@ public :
 	size_t getNumberOfTetrahedralPoints() const;
 	/// get the global index of the control point associated with a given tetrahedron index and given its 4D Index   
 	size_t getGlobalIndexOfControlPoint(const TetraID tetrahedronIndex,const TetrahedronIndexVector id) ;
+    /// return   the global index of a control point from its location, the element index and its offset
+    bool getGlobalIndexFromLocation(const HighOrderTetrahedronPointLocation location,
+        const size_t elementIndex, const size_t elementOffset, size_t &globalIndex);
 	/// get the indices of all control points associated with a given tetrahedron
 	const VecPointID &getGlobalIndexArrayOfControlPoints(const TetraID tetrahedronIndex) const;
 	/// return the tetrahedron index given the local index in a tetrahedron
-	TetrahedronIndexVector getTetrahedronIndex(const size_t localIndex) const;
+	TetrahedronIndexVector getTetrahedronIndexVector(const size_t localIndex) const;
 	/// get the Tetrahedron  Index Array of degree d
 	sofa::helper::vector<TetrahedronIndexVector> getTetrahedronIndexArray() const;
 	/// get the Tetrahedron  Index Array of a given degree 
@@ -132,8 +135,8 @@ public :
 	/** create an array which maps the local index of a Tetrahedron Index of degree d-1
 	into a local index of a TBI of degree d by adding respectively (1,0,0,0), (0,1,0,0), (0,0,1,0), (0,0,0,1) **/
 	sofa::helper::vector<LocalTetrahedronIndex> getMapOfTetrahedronIndexArrayFromInferiorDegree() const;
-	/// return the local index in a tetrahedron from a tetrahedron index (inverse of getTetrahedronIndex())
-	size_t getLocalIndexFromTetrahedronIndex(const TetrahedronIndexVector id) const;
+	/// return the local index in a tetrahedron from a tetrahedron index (inverse of getTetrahedronIndexVector())
+	size_t getLocalIndexFromTetrahedronIndexVector(const TetrahedronIndexVector id) const;
 	/// return the location, the element index and offset from the global index of a point
 	void getLocationFromGlobalIndex(const size_t globalIndex, HighOrderTetrahedronPointLocation &location, 
 		size_t &elementIndex, size_t &elementOffset) ;
@@ -157,7 +160,10 @@ public :
 	size_t getLexicographicIndex(size_t i) const;
 	// returns the Lexicographic index associated with a Tetrahedron Vector index
 	size_t getLexicographicIndex(const TetrahedronIndexVector tvi) const;
-	 /// @}
+    /// Create element lists which are on topology border:
+    virtual void createElementsOnBorder();
+    /// @}
+
 
     inline friend std::ostream& operator<< (std::ostream& out, const HighOrderTetrahedronSetTopologyContainer& t)
     {

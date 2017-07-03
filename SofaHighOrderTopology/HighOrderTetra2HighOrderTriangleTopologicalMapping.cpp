@@ -97,10 +97,13 @@ void HighOrderTetra2HighOrderTriangleTopologicalMapping::init()
 			Glob2LocMap.clear();
 			size_t rankTriangle=0;
 			// set to count the number of vertices 
-			std::set<size_t> vertexSet;
+			std::set<size_t> vertexSet,edgeSet;
 			// set the boolean indicating if the triangulation is rational
 			helper::WriteOnlyAccessor<Data <HighOrderTriangleSetTopologyContainer::SeqBools> >  isRationalSpline=to_btstc->d_isRationalSpline;
-
+            std::set<Triangle> triangleSet;
+            size_t degree = from_btstc->getDegree();
+            size_t j,k, globalIndex,offset;
+            bool ret;
 			for (unsigned int i=0; i<triangleArray.size(); ++i)
 			{
 				/// find triangles on the border of the tetrahedral mesh 
@@ -115,43 +118,67 @@ void HighOrderTetra2HighOrderTriangleTopologicalMapping::init()
 						t[2] = t[1];
 						t[1] = tmp;
 					}
+                    triangleSet.insert(t);
 					to_tstm->addTriangleProcess(t);
 					// add vertices in set
 					vertexSet.insert(t[0]);vertexSet.insert(t[1]);vertexSet.insert(t[2]);
+                    // update local maps of control points
+                    for (j = 0; j < 3; ++j) {
+                        HighOrderTriangleSetTopologyContainer::ControlPointLocation cpl(t[j], std::make_pair(HighOrderTriangleSetTopologyContainer::POINT, 0));
+                        to_btstc->locationToGlobalIndexMap.insert(make_pair(cpl, t[j]));
+                        to_btstc->globalIndexToLocationMap.insert(make_pair(t[j], cpl));
+                    }
 					//  if the adjacent tetrahedron is rational then the triangle is also rational
 					const bool irs=from_btstc->isRationalSpline(tat[0]);
 					isRationalSpline.push_back(irs);
-
+                    // update the 2 lookup table to get tetrahedron id from triangle id and conversely
 					Loc2GlobVec.push_back(i);
 					Glob2LocMap[i]=Loc2GlobVec.size()-1;
-					// update the local maps of control points
-					// get the control points of the tetrahedron adjacent to that triangle
-					const HighOrderTriangleSetTopologyContainer::VecPointID  &indexArray=
-						from_btstc->getGlobalIndexArrayOfControlPoints(tat[0]);
-					Tetrahedron tet=from_btstc->getTetrahedron(tat[0]);
-					size_t k,j,l,equiv[3];
-					// get the index of that triangle in the tetrahedron
-					TrianglesInTetrahedron tit=from_btstc->getTrianglesInTetrahedron(tat[0]);
-					for (l=0;tit[l]!=i;++l);
-					// find the equivalence between the triangle index and tetrahedron index
-					for(j=0;j<3;++j) {
-						for(k=0;tet[k]!=t[j];++k);
-						equiv[j]=k;
-					}
-					// now gets the indices of all control points in the Bezier triangle
-					sofa::helper::vector<TriangleIndexVector> trbia=to_btstc->getTriangleIndexArray();
-					for (j=0;j<trbia.size();j++) {
-						// finds the TetrahedronIndexVector tbi associated with the TriangleIndexVector trbia[j]
-						TetrahedronIndexVector tbi;
-						tbi[l]=0;
-						for(k=0;k<3;++k) {
-							tbi[equiv[k]]= trbia[j][k];
-						}
-						size_t globalIndex=indexArray[from_btstc->getLocalIndexFromTetrahedronIndex(tbi)];
-						// now fill the Bezier triangle maps
-						to_btstc->locationToGlobalIndexMap.insert(std::pair<HighOrderTriangleSetTopologyContainer::ControlPointLocation,size_t>(HighOrderTriangleSetTopologyContainer::ControlPointLocation(rankTriangle,trbia[j]),globalIndex));
-						to_btstc->globalIndexToLocationMap.insert(std::pair<size_t,HighOrderTriangleSetTopologyContainer::ControlPointLocation>(globalIndex,HighOrderTriangleSetTopologyContainer::ControlPointLocation(rankTriangle,trbia[j])));
-					}
+                    // update edge information
+                    if (degree > 1) {
+                        core::topology::BaseMeshTopology::EdgesInTriangle eit = from_btstc->getEdgesInTriangle(i);
+
+                        for (j = 0; j < 3; ++j) {
+                            if (edgeSet.count(eit[j]) == 0) {
+                                Edge e = from_btstc->getEdge(eit[j]);
+                                size_t v0 = std::min(e[0], e[1]);
+                                size_t v1 = std::max(e[0], e[1]);
+                                int realEdgeIndex = to_btstc->getEdgeIndex(v0, v1);
+                                assert(realEdgeIndex >= 0);
+                                Edge e2 = to_btstc->getEdge((unsigned int)realEdgeIndex);
+                                for (k = 0; k < (degree - 1); ++k) {
+                                   
+                                    if (e[0] == e2[0]) {
+                                        offset =k;
+                                    }
+                                    else {
+                                        assert(e[0] == e2[1]);
+                                        offset = degree -2 -k;
+                                    }
+                                    ret=from_btstc->getGlobalIndexFromLocation(HighOrderTetrahedronSetTopologyContainer::EDGE, eit[j], k, globalIndex);
+                                    assert(ret);
+                                    HighOrderTriangleSetTopologyContainer::ControlPointLocation cpl((size_t)realEdgeIndex, std::make_pair(HighOrderTriangleSetTopologyContainer::EDGE, offset));
+                                    to_btstc->locationToGlobalIndexMap.insert(make_pair(cpl, globalIndex));
+                                    to_btstc->globalIndexToLocationMap.insert(make_pair(globalIndex, cpl));
+                                }
+                                edgeSet.insert(eit[j]);
+
+                            }
+                        }
+                    }
+
+                    // update triangle information
+                    if (degree > 2) {
+                        size_t nbTriangleControlPoints = (degree - 1)*(degree - 2) / 2;
+                        for (k = 0; k < nbTriangleControlPoints; ++k) {
+                            ret=from_btstc->getGlobalIndexFromLocation(HighOrderTetrahedronSetTopologyContainer::TRIANGLE, i, k, globalIndex);
+                            assert(ret);
+                            HighOrderTriangleSetTopologyContainer::ControlPointLocation cpl(triangleSet.size()-1, std::make_pair(HighOrderTriangleSetTopologyContainer::TRIANGLE, k));
+                            to_btstc->locationToGlobalIndexMap.insert(make_pair(cpl, globalIndex));
+                            to_btstc->globalIndexToLocationMap.insert(make_pair(globalIndex, cpl));
+                        }
+                    }
+                   
 					rankTriangle++;
 				}
 			}

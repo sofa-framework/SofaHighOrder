@@ -47,7 +47,7 @@ public:
 
 	typedef sofa::defaulttype::Vec<3,int> ElementTriangleIndex;
 	typedef sofa::defaulttype::Vec<3,size_t> LocalTriangleIndex;
-	typedef std::pair<size_t,TriangleIndexVector> ControlPointLocation;
+
 	typedef sofa::helper::vector<SReal> SeqWeights;
 	typedef sofa::helper::vector<bool> SeqBools;
 	typedef sofa::helper::vector< VecPointID > SeqDOFInHighOrderTriangle;
@@ -58,6 +58,20 @@ public:
 	/* specify for each control point lying on a triangle  : the control point index, the index of the  triangle, 
 	 the 3 integers specifying the position within this triangle (i.e. 111 for a cubic triangle , 121 within a quartic triangle).. */
 	typedef sofa::helper::fixed_array<PointID,5> HighOrderTrianglePosition;
+
+
+    // specifies where a control Point can lies with respect to the underlying tetrahedral mesh
+    enum HighOrderTrianglePointLocation
+    {
+        POINT = 0,
+        EDGE = 1,
+        TRIANGLE = 2,
+        NONE = 3
+    };
+    //	typedef std::pair<size_t,TriangleIndexVector> ControlPointLocation;
+    /* describes where a control point is located : first integer is the index of the element on which the control point is lying,
+    then a pair indicating the type of element and its offset within this element */
+    typedef std::pair<size_t, std::pair< HighOrderTrianglePointLocation, size_t> > ControlPointLocation;
 
     friend class HighOrderTriangleSetTopologyModifier;
 	friend class Mesh2HighOrderTopologicalMapping;
@@ -92,20 +106,16 @@ public :
 	/// the array describing the local position of a control point within a triangle
     Data< helper::vector< HighOrderTrianglePosition > > inputHighOrderTrianglePositions;
 public :
-	// specifies where a control Point can lies with respect to the underlying tetrahedral mesh
-	enum HighOrderTrianglePointLocation
-    {
-        POINT = 0,
-        EDGE =1 ,
-        TRIANGLE = 2,
-		NONE = 3
-    };
+
 	/// get the Degree of the high order triangle
 	HighOrderDegreeType getDegree() const;
 	/// get the number of control points corresponding to the vertices of the triangle mesh 
 	size_t getNumberOfTriangularPoints() const;
 	/// get the global index of the control point associated with a given tetrahedron index and given its 4D Index   
 	size_t getGlobalIndexOfControlPoint(const TriangleID triangleIndex,const TriangleIndexVector id) ;
+    /// return   the global index of a control point from its location, the element index and its offset
+    bool getGlobalIndexFromLocation(const HighOrderTrianglePointLocation location,
+        const size_t elementIndex, const size_t elementOffset, size_t &globalIndex);
 	/// get the indices of all control points associated with a given triangle
 	const VecPointID &getGlobalIndexArrayOfControlPoints(const TetraID triangleIndex) const;
 	/// return the triangle index vector given the local index in a triangle
@@ -132,19 +142,22 @@ public :
 	void getTriangleIndexVectorFromTriangleOffset(size_t offset, TriangleIndexVector &tbi);
 	/// check the high order triangle Topology
 	bool checkHighOrderTriangleTopology();
+    /** \brief Returns the weight coordinate of the ith DOF. */
+    virtual SReal getWeight(int i) const;
+    /// returns the array of weights
+    const SeqWeights & getWeightArray() const;
+    // if the triangle is rational or integral
+    bool isRationalSpline(int i) const;
+    // returns the Hierarchical index associated with the Lexicographic index i
+    size_t getHierarchicalIndex(size_t i) const;
+    // returns the Lexicographic index associated with the Hierarchical index i
+    size_t getLexicographicIndex(size_t i) const;
+    // returns the Lexicographic index associated with a Triangle Vector index
+    size_t getLexicographicIndex(const TriangleIndexVector tvi) const;
+    /// Create element lists which are on topology border:
+    virtual void createElementsOnBorder();
 	 /// @}
-	/** \brief Returns the weight coordinate of the ith DOF. */
-	virtual SReal getWeight(int i) const;
-	/// returns the array of weights
-	const SeqWeights & getWeightArray() const;
-	// if the triangle is rational or integral
-	bool isRationalSpline(int i) const;
-	// returns the Hierarchical index associated with the Lexicographic index i
-	size_t getHierarchicalIndex(size_t i) const;
-	// returns the Lexicographic index associated with the Hierarchical index i
-	size_t getLexicographicIndex(size_t i) const;
-	// returns the Lexicographic index associated with a Triangle Vector index
-	size_t getLexicographicIndex(const TriangleIndexVector tvi) const;
+
 
 protected:
 	/// array describing the global  index of the DOFs used in weightedDOFArray
@@ -155,7 +168,7 @@ protected:
 	/** Map which provides the  location (i.e. triangle index and its TriangleIndexVector) of a control point knowing its  global index.
 	Note that the location may not be unique.
 	This is empty by default since there is a default layout of control points based on edge and triangles indices */
-	std::multimap<size_t,ControlPointLocation> globalIndexToLocationMap;
+    std::map<size_t, ControlPointLocation> globalIndexToLocationMap;
 
 
 	/// Map which provides the location (point, edge, Triangle) of a control point given its Triangle Bezier index

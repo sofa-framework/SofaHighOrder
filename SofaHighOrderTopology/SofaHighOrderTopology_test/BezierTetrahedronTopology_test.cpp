@@ -135,9 +135,9 @@ struct BezierTetrahedronTopology_test : public Sofa_test<typename _DataTypes::Re
 					ADD_FAILURE() << "wrong global index given by  getGlobalIndexOfControlPoint(). It is : "<<globalIndex <<" and should be "<<indexArray[elem]  << std::endl;
 					return false;
 				}
- 				TetrahedronBezierIndex tbi=container->getTetrahedronIndex(elem);
-				if(elem!=container->getLocalIndexFromTetrahedronIndex(tbi)) {
-					ADD_FAILURE() << "wrong local index given by  getLocalIndexFromTetrahedronIndex(). It is : "<<container->getLocalIndexFromTetrahedronIndex(tbi) <<" and should be "<<elem  << std::endl;
+ 				TetrahedronBezierIndex tbi=container->getTetrahedronIndexVector(elem);
+				if(elem!=container->getLocalIndexFromTetrahedronIndexVector(tbi)) {
+					ADD_FAILURE() << "wrong local index given by  getLocalIndexFromTetrahedronIndexVector(). It is : "<<container->getLocalIndexFromTetrahedronIndexVector(tbi) <<" and should be "<<elem  << std::endl;
 					return false;
 				}
 				// check that getTetrahedronBezierIndex is consistant with getTetrahedronBezierIndexArray

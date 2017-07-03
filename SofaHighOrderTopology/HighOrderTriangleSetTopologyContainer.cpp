@@ -193,12 +193,16 @@ void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 	const sofa::helper::vector<Triangle> &tra=getTriangleArray();
 	for (i=0;i<tra.size();++i) {
 		for (j=0;j<3;++j) {
+            ControlPointLocation cpl(tra[i][j], std::make_pair(POINT, 0));
+            locationToGlobalIndexMap.insert(std::pair<ControlPointLocation, size_t>(cpl, tra[i][j]));
+            globalIndexToLocationMap.insert(std::pair<size_t, ControlPointLocation>(tra[i][j], cpl));
 
+            /*
 			TriangleIndexVector tiv(0,0,0);
 			tiv[j]=degree;
 			locationToGlobalIndexMap.insert(std::pair<HighOrderTriangleSetTopologyContainer::ControlPointLocation,size_t>(HighOrderTriangleSetTopologyContainer::ControlPointLocation(i,tiv),tra[i][j]));
 			globalIndexToLocationMap.insert(std::pair<size_t,HighOrderTriangleSetTopologyContainer::ControlPointLocation>(tra[i][j],HighOrderTriangleSetTopologyContainer::ControlPointLocation(i,tiv)));
-
+            */
 		}
 
 	}
@@ -216,6 +220,17 @@ void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 		int realEdgeIndex=this->getEdgeIndex(v0,v1);
 		assert(realEdgeIndex>=0);
 		if (realEdgeIndex>=0) {
+            size_t offset;
+            if (v0 == inputEdgeArray[edgeIndex][0]) {
+                offset = degree - hoEdgeArray[i][2] - 1;
+            }
+            else {
+                offset = degree - hoEdgeArray[i][3] - 1;
+            }
+            ControlPointLocation cpl((EdgeID)realEdgeIndex, std::make_pair(EDGE, offset));
+            locationToGlobalIndexMap.insert(std::pair<ControlPointLocation, size_t>(cpl, pointIndex));
+            globalIndexToLocationMap.insert(std::pair<size_t, ControlPointLocation>(pointIndex, cpl));
+            /* 
 			const TrianglesAroundEdge &tae=this->getTrianglesAroundEdge((EdgeID)realEdgeIndex);
 			assert(tae.size()>0);
 			for (j=0;j<tae.size();++j) {
@@ -236,7 +251,7 @@ void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 				}
 				locationToGlobalIndexMap.insert(std::pair<HighOrderTriangleSetTopologyContainer::ControlPointLocation,size_t>(HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv),pointIndex));
 				globalIndexToLocationMap.insert(std::pair<size_t,HighOrderTriangleSetTopologyContainer::ControlPointLocation>(pointIndex,HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv)));
-			}
+			}*/
 		}
 	}
 	helper::ReadAccessor<Data<helper::vector< HighOrderTrianglePosition > > > hoTriangleArray = this->inputHighOrderTrianglePositions;
@@ -247,8 +262,16 @@ void HighOrderTriangleSetTopologyContainer::parseInputData()  {
 		assert((hoTriangleArray[i][2]+ hoTriangleArray[i][3]+ hoTriangleArray[i][4])==degree);
 		Triangle t=this->getTriangle(triangleIndex);
 		TriangleIndexVector tiv(hoTriangleArray[i][2], hoTriangleArray[i][3], hoTriangleArray[i][4]);
+        OffsetMapIterator omi = triangleOffsetMap.find(tiv);
+        assert(omi != triangleOffsetMap.end());
+        ControlPointLocation cpl(triangleIndex, std::make_pair(TRIANGLE, (*omi).second));
+        locationToGlobalIndexMap.insert(std::pair<ControlPointLocation, size_t>(cpl, pointIndex));
+        globalIndexToLocationMap.insert(std::pair<size_t, ControlPointLocation>(pointIndex, cpl));
+
+        /*
 		locationToGlobalIndexMap.insert(std::pair<HighOrderTriangleSetTopologyContainer::ControlPointLocation,size_t>(HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv),pointIndex));
 		globalIndexToLocationMap.insert(std::pair<size_t,HighOrderTriangleSetTopologyContainer::ControlPointLocation>(pointIndex,HighOrderTriangleSetTopologyContainer::ControlPointLocation(triangleIndex,tiv)));
+        */
 	}
 
 }
@@ -269,72 +292,102 @@ HighOrderDegreeType HighOrderTriangleSetTopologyContainer::getDegree() const{
 size_t HighOrderTriangleSetTopologyContainer::getNumberOfTriangularPoints() const{
      return d_numberOfTriangularPoints.getValue();
 }
+bool HighOrderTriangleSetTopologyContainer::getGlobalIndexFromLocation(const HighOrderTrianglePointLocation location,
+    const size_t elementIndex, const size_t elementOffset, size_t &globalIndex) {
+    HighOrderDegreeType degree = d_degree.getValue();
+    if (locationToGlobalIndexMap.size() > 0) {
+        ControlPointLocation cpl(elementIndex, std::make_pair(location, elementOffset));
+        if (locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end()) {
+            globalIndex = locationToGlobalIndexMap[cpl];
+            return(true);
+        }
+        else {
+            return(false);
+        }
+    }
+    else {
+        if (location == POINT) {
+            globalIndex = elementIndex;
+        }
+        else  if (location == EDGE) {
+            globalIndex = getNumberOfTriangularPoints() + elementIndex * (degree - 1) + elementOffset;
+        }
+        else  if (location == TRIANGLE) {
+            size_t pointsPerTriangle = (degree - 1)*(degree - 2) / 2;
+            globalIndex = getNumberOfTriangularPoints() + getNumberOfEdges() * (degree - 1) + pointsPerTriangle*elementIndex + elementOffset;
 
+        }
+        else {
+            return(false);
+        }
+        return(true);
+    }
+
+}
 size_t HighOrderTriangleSetTopologyContainer::getGlobalIndexOfControlPoint(const TetraID triangleIndex,
-     const TriangleIndexVector id) {
+    const TriangleIndexVector id)
+{
 
-         if (locationToGlobalIndexMap.empty()) {
-             Triangle tr=getTriangle(triangleIndex);
-             HighOrderDegreeType degree=d_degree.getValue();
-             ElementMapIterator emi=elementMap.find(id);
-             if (emi!=elementMap.end()) {
-                 ElementTriangleIndex ei=(*emi).second;
-                 if (ei[0]!= -1) {
-                     // point is a vertex of the triangular mesh
-                     return (tr[ei[0]]);
-                 } else if (ei[1]!= -1) {
-                     // point is on an edge of the triangular mesh
-                     // the points on edges are stored after the Triangle vertices
-                     // there are (degree-1) points store on each edge
-                     // eit[ei[1]] = id of edge where the point is located
-                     // ei[1] = the local index (<3) of the edge where the point is located
-                     EdgesInTriangle eit=getEdgesInTriangle(triangleIndex);
-                     Edge e=getEdge(eit[ei[1]]);
-                     // test if the edge is along the right direction
-                     OffsetMapIterator omi=edgeOffsetMap.find(id);
-                     if (e[0]==tr[(ei[1]+1)%3]) {
-                         return(getNumberOfTriangularPoints()+eit[ei[1]]*(degree-1)+(*omi).second);
-                     } else {
-                         // use the other direction
-                         return(getNumberOfTriangularPoints()+eit[ei[1]]*(degree-1)+degree-2-(*omi).second);
-                     }
 
-                 } else if (ei[2]!= -1) {
-                     // the points on edges are stored after the tetrahedron vertices
-                     // there are (degree-1)*(degree-2)/2 points store on each edge
-                     // eit[ei[1]] = id of edge where the point is located
-                     // ei[1] = the local index (<6) of the edge where the point is located
-                     OffsetMapIterator omi=triangleOffsetMap.find(id);
-                     return(getNumberOfTriangularPoints()+getNumberOfEdges()*(degree-1)+triangleIndex*(degree-1)*(degree-2)/2+(*omi).second);
-                 }
-                 else
-                 {
-#ifndef NDEBUG
-                    sout << "Unexpected error in [HighOrderTriangleSetTopologyContainer::getGlobalIndexOfControlPoint]" << sendl;
-#endif
-                    return 0; //Warning fix but maybe the author of this code would want to print a more meaningful error message for this "ei[0] = ei[1] = ei[2] = -1" case ?
-                 }
-             } else {
-#ifndef NDEBUG
-                 sout << "Error. [HighOrderTriangleSetTopologyContainer::getGlobalIndexOfControlPoint] Bezier Index "<< (sofa::defaulttype::Vec<3,int> )(id) <<" has not been recognized to be valid" << sendl;
-#endif
-                 return 0;
-             }
-         } else {
-             std::map<ControlPointLocation,size_t>::const_iterator itgi;
+    Triangle tr = getTriangle(triangleIndex);
+    HighOrderDegreeType degree = d_degree.getValue();
+    ElementMapIterator emi = elementMap.find(id);
+    if (emi != elementMap.end()) {
+        ElementTriangleIndex ei = (*emi).second;
+        if (ei[0] != -1) {
+            // point is a vertex of the triangular mesh
+            return (tr[ei[0]]);
+        }
+        else if (ei[1] != -1) {
+            // point is on an edge of the triangular mesh
+            // the points on edges are stored after the Triangle vertices
+            // there are (degree-1) points store on each edge
+            // eit[ei[1]] = id of edge where the point is located
+            // ei[1] = the local index (<3) of the edge where the point is located
+            EdgesInTriangle eit = getEdgesInTriangle(triangleIndex);
+            Edge e = getEdge(eit[ei[1]]);
+            // test if the edge is along the right direction
+            OffsetMapIterator omi = edgeOffsetMap.find(id);
+            if (locationToGlobalIndexMap.empty()) {
+                if (e[0] == tr[(ei[1] + 1) % 3]) {
+                    return(getNumberOfTriangularPoints() + eit[ei[1]] * (degree - 1) + (*omi).second);
+                }
+                else {
+                    // use the other direction
+                    return(getNumberOfTriangularPoints() + eit[ei[1]] * (degree - 1) + degree - 2 - (*omi).second);
+                }
+            }
+            else {
+                ControlPointLocation cpl(eit[ei[1]], std::make_pair(EDGE, (*omi).second));
+                if (e[0] == tr[(ei[1] + 1) % 3]) {
+                    cpl = ControlPointLocation(eit[ei[1]], std::make_pair(EDGE, degree - 2 - (*omi).second));
+                }
+                assert(locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end());
+                return(locationToGlobalIndexMap[cpl]);
+            }
+           
 
-             itgi=locationToGlobalIndexMap.find(ControlPointLocation(triangleIndex,id));
-             if (itgi!=locationToGlobalIndexMap.end()) {
-                 return(itgi->second);
-             } else {
-#ifndef NDEBUG
-                 sout << "Error. [HighOrderTriangleSetTopologyContainer::getGlobalIndexOfControlPoint] Cannot find global index of control point with TRBI  "<< (sofa::defaulttype::Vec<3,int> )(id) <<" and triangle index " << triangleIndex <<sendl;
-#endif
-                 return 0;
-             }
-
-         }
- }
+        }
+        else if (ei[2] != -1) {
+            // the points on triangles are stored after the tetrahedron vertices
+            // there are (degree-1)*(degree-2)/2 points store on each edge
+            // eit[ei[1]] = id of edge where the point is located
+            // ei[1] = the local index (<6) of the edge where the point is located
+            OffsetMapIterator omi = triangleOffsetMap.find(id);
+            if (locationToGlobalIndexMap.empty()) {
+                return(getNumberOfTriangularPoints() + getNumberOfEdges()*(degree - 1) + triangleIndex*(degree - 1)*(degree - 2) / 2 + (*omi).second);
+            }
+            else {
+                ControlPointLocation cpl(ei[2], std::make_pair(TRIANGLE, (*omi).second));
+                assert(locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end());
+                return(locationToGlobalIndexMap[cpl]);
+            }
+          
+        }
+      
+    }
+   
+}
 
 
 TriangleIndexVector HighOrderTriangleSetTopologyContainer::getTriangleIndexVector(const size_t localIndex) const
@@ -439,67 +492,89 @@ const HighOrderTriangleSetTopologyContainer::VecPointID &HighOrderTriangleSetTop
 void HighOrderTriangleSetTopologyContainer::getGlobalIndexArrayOfControlPointsInTriangle(const TriangleID triangleIndex, VecPointID& indexArray)
 {
 	
-	indexArray.clear();
-	if (locationToGlobalIndexMap.empty()) {
-		Triangle tr=getTriangle(triangleIndex);
-		// vertex index
-		size_t i,j;
-		for (i=0;i<3;++i)
-			indexArray.push_back(tr[i]);
+    indexArray.clear();
 
-		size_t offset;
-		// edge index
-		HighOrderDegreeType degree=d_degree.getValue();
-		if (degree>1) {
-			EdgesInTriangle eit=getEdgesInTriangle(triangleIndex);
-			for (i=0;i<3;++i) {
-				Edge e=getEdge(eit[i]);
-				offset=getNumberOfTriangularPoints()+eit[i]*(degree-1);
-				// check the order of the edge to be consistent with the Triangle
-				if (e[0]==tr[(i+1)%3] ) {
-					for (j=0;j<(size_t)(degree-1);++j) {
-						indexArray.push_back(offset+j);
-					}
-				} else {
-					int jj;
-					for (jj=degree-2;jj>=0;--jj) {
-						indexArray.push_back(offset+jj);
-					}
-				}
-			}
-		}
+    Triangle tr = getTriangle(triangleIndex);
+    // vertex index
+    size_t i, j;
+    for (i = 0; i < 3; ++i)
+        indexArray.push_back(tr[i]);
+
+    size_t offset;
+    // edge index
+    HighOrderDegreeType degree = d_degree.getValue();
+    if (degree > 1) {
+        EdgesInTriangle eit = getEdgesInTriangle(triangleIndex);
+        for (i = 0; i < 3; ++i) {
+            Edge e = getEdge(eit[i]);
+            if (locationToGlobalIndexMap.empty()) {
+                offset = getNumberOfTriangularPoints() + eit[i] * (degree - 1);
+                // check the order of the edge to be consistent with the Triangle
+                if (e[0] == tr[(i + 1) % 3]) {
+                    for (j = 0; j < (size_t)(degree - 1); ++j) {
+                        indexArray.push_back(offset + j);
+                    }
+                }
+                else {
+                    int jj;
+                    for (jj = degree - 2; jj >= 0; --jj) {
+                        indexArray.push_back(offset + jj);
+                    }
+                }
+            }
+            else {
+                ControlPointLocation cpl;
+                if (e[0] == tr[(i + 1) % 3]) {
+                    for (j = 0; j < (size_t)(degree - 1); ++j) {
+                        cpl = ControlPointLocation(eit[i], std::make_pair(EDGE, j));
+                        assert(locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end());
+                        indexArray.push_back(locationToGlobalIndexMap[cpl]);
+                    }
+                }
+                else {
+                    int jj;
+                    for (jj = degree - 2; jj >= 0; --jj) {
+                        cpl = ControlPointLocation(eit[i], std::make_pair(EDGE, (size_t)jj));
+                        assert(locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end());
+                        indexArray.push_back(locationToGlobalIndexMap[cpl]);
+                    }
+                }
+
+            }
 
 
 
-		// Triangle index
-		if (degree>2) {
-			size_t pointsPerTriangle=(degree-1)*(degree-2)/2;
-			offset=getNumberOfTriangularPoints()+getNumberOfEdges()*(degree-1)+triangleIndex*pointsPerTriangle;
-			size_t rank=0;
-			for (i=0;i<(size_t)(degree-2);++i) {
-				for (j=0;j<(degree-i-2);++j) {
-					indexArray.push_back(offset+rank);
-					rank++;
-				}
-			}
-		}
-	} else {
-		size_t i;
-		std::map<ControlPointLocation,size_t>::const_iterator itgi;
-		for (i=0;i<bezierIndexArray.size();++i) {
-			itgi=locationToGlobalIndexMap.find(ControlPointLocation(triangleIndex,bezierIndexArray[i]));
-			if (itgi!=locationToGlobalIndexMap.end()) {
-				indexArray.push_back(itgi->second);
-			} else {
-#ifndef NDEBUG
-				sout << "Error. [HighOrderTriangleSetTopologyContainer::getGlobalIndexArrayOfControlPointsInTriangle] Cannot find global index of control point with TRBI  "<< (sofa::defaulttype::Vec<3,int> )(bezierIndexArray[i]) <<" and triangle index " << triangleIndex <<sendl;
-#endif
-			}
 
-		}
+        }
+    }
 
-	}
-	}
+
+
+    // Triangle index
+    if (degree > 2) {
+        size_t pointsPerTriangle = (degree - 1)*(degree - 2) / 2;
+        offset = getNumberOfTriangularPoints() + getNumberOfEdges()*(degree - 1) + triangleIndex*pointsPerTriangle;
+        size_t rank = 0;
+        for (i = 0; i < (size_t)(degree - 2); ++i) {
+            for (j = 0; j < (degree - i - 2); ++j) {
+                if (locationToGlobalIndexMap.empty()) {
+                    indexArray.push_back(offset + rank);
+                }
+                else {
+                    ControlPointLocation cpl(triangleIndex, std::make_pair(TRIANGLE, rank));
+                    assert(locationToGlobalIndexMap.find(cpl) != locationToGlobalIndexMap.end());
+                    indexArray.push_back(locationToGlobalIndexMap[cpl]);
+                }
+                rank++;
+
+            }
+        }
+
+    }
+}
+
+
+	
 void HighOrderTriangleSetTopologyContainer::getLocationFromGlobalIndex(const size_t globalIndex, HighOrderTrianglePointLocation &location, 
 	size_t &elementIndex, size_t &elementOffset)
 {
@@ -532,38 +607,20 @@ void HighOrderTriangleSetTopologyContainer::getLocationFromGlobalIndex(const siz
 
 		}
 	} else {
-		std::multimap<size_t,ControlPointLocation>::const_iterator itcpl;
-		itcpl=globalIndexToLocationMap.find(gi); 
-		if (itcpl!=globalIndexToLocationMap.end()) {
-			// get the local index and triangle index of that control point
-			size_t offset=getLocalIndexFromTriangleIndexVector(itcpl->second.second);
-			// if its local index is less than 3 then it is a triangle vertex
-			if (offset<3) {
-				location=POINT;
-				elementIndex=getTriangle(itcpl->second.first)[offset];
-				elementOffset=0;
-			} else {
-				offset -= 3;
-				HighOrderDegreeType degree=d_degree.getValue();
-                if ((HighOrderDegreeType)offset<3*(degree-1)){
-					location=EDGE;
-					// get the id of the edge on which it lies
-					elementIndex=getEdgesInTriangle(itcpl->second.first)[offset/(degree-1)];
-					elementOffset=offset%(degree-1);
-				} else {
-					offset -= 3*(degree-1);
-					location=TRIANGLE;
-					elementIndex=itcpl->second.first;
-					elementOffset=offset;
-				}
-			}
-		} else {
-			location=NONE;
-			elementIndex=0;
-			elementOffset=0;
-		}
+        location = NONE;
+        std::map<size_t, ControlPointLocation>::iterator itcpl = globalIndexToLocationMap.find(globalIndex);
+#ifndef NDEBUG
+        if (itcpl == globalIndexToLocationMap.end())
+            sout << "Error. [HighOrderTetrahedronSetTopologyContainer::getLocationFromGlobalIndex] Global Index " << globalIndex << " is not in the map globalIndexToLocationMap " << sendl;
+#endif
+        if (itcpl != globalIndexToLocationMap.end()) {
+            location = ((*itcpl).second).second.first;
+            elementIndex = ((*itcpl).second).first;
+            elementOffset = ((*itcpl).second).second.second;
+        }
 	}
 }
+
 sofa::helper::vector<HighOrderTriangleSetTopologyContainer::LocalTriangleIndex> HighOrderTriangleSetTopologyContainer::getLocalIndexSubtriangleArray() const {
 	sofa::helper::vector<LocalTriangleIndex> subtriangleArray;
 	HighOrderDegreeType degree=d_degree.getValue();
@@ -653,6 +710,32 @@ void HighOrderTriangleSetTopologyContainer::getTriangleIndexVectorFromTriangleOf
 	assert(offset<(d_degree.getValue()-1)*(d_degree.getValue()-2)/2);
 	tbi=offsetToTriangleIndexVectorArray[offset];
 }
+
+void HighOrderTriangleSetTopologyContainer::createElementsOnBorder()
+{
+    TriangleSetTopologyContainer::createElementsOnBorder();
+
+
+    HighOrderDegreeType degree = d_degree.getValue();
+    if (degree > 1) {
+        sofa::helper::vector <EdgeID>::iterator ite;
+        size_t i;
+        std::map<ControlPointLocation, size_t>::iterator itIndex;
+        // add edge control points in the border
+        HighOrderTrianglePointLocation loc = HighOrderTriangleSetTopologyContainer::EDGE;
+        typedef std::pair< HighOrderTrianglePointLocation, size_t> pairLocOffset;
+        for (ite = m_edgesOnBorder.begin(); ite != m_edgesOnBorder.end(); ite++) {
+            // find all degree-1 control points lying on the edge
+            for (i = 0; i < (degree - 1); ++i) {
+                ControlPointLocation cpl((*ite), pairLocOffset(loc, i));
+                itIndex = locationToGlobalIndexMap.find(cpl);
+                assert(itIndex != locationToGlobalIndexMap.end());
+                m_pointsOnBorder.push_back((*itIndex).second);
+            }
+        }
+    }
+}
+
 bool HighOrderTriangleSetTopologyContainer::checkHighOrderTriangleTopology()
 {
 	#ifndef NDEBUG
@@ -701,12 +784,12 @@ bool HighOrderTriangleSetTopologyContainer::checkHighOrderTriangleTopology()
 		std::map<ControlPointLocation,size_t>::iterator itcpl;
 		std::map<size_t,ControlPointLocation>::iterator itgi;
 		std::pair<std::map<size_t,ControlPointLocation>::iterator,std::map<size_t,ControlPointLocation>::iterator> itgir;
-		for (itcpl=locationToGlobalIndexMap.begin();itcpl!=locationToGlobalIndexMap.end();++itcpl) {
-			itgir=globalIndexToLocationMap.equal_range(itcpl->second);
-			assert(itgir.first!=itgir.second);
-			for (itgi=itgir.first;itgi->second!=itcpl->first && itgi!=itgir.second;++itgi);
-			assert(itgi->second==itcpl->first);
-		}
+        for (itcpl = locationToGlobalIndexMap.begin(); itcpl != locationToGlobalIndexMap.end(); ++itcpl) {
+            itgi = globalIndexToLocationMap.find(itcpl->second);
+            assert(itgi != globalIndexToLocationMap.end());
+            assert((*itgi).second == (*itcpl).first);
+        }
+
 	}
 	#endif
 	return( true);

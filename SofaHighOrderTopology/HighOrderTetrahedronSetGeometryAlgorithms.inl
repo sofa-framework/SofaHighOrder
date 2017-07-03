@@ -51,7 +51,7 @@ template< class DataTypes>
 				for (k=0;k<=(degree-j-i);++k) {
 					l=degree-i-j-k;
 					tbi=TetrahedronIndexVector(i,j,k,l);
-					index1=container->getLocalIndexFromTetrahedronIndex(tbi);
+					index1=container->getLocalIndexFromTetrahedronIndexVector(tbi);
 					for(m=0;m<4;++m) {
 						if (tbi[m]<degree) {
 							for (n=1;n<4;++n) {
@@ -59,7 +59,7 @@ template< class DataTypes>
 									tbiNext=tbi;
 									tbiNext[m]=tbi[m]+1;
 									tbiNext[(m+n)%4]=tbi[(m+n)%4]-1;
-									index2=container->getLocalIndexFromTetrahedronIndex(tbiNext);
+									index2=container->getLocalIndexFromTetrahedronIndexVector(tbiNext);
 									Edge e((PointID)std::min(index1,index2),(PointID)std::max(index1,index2));
 									// test if both control points are on an edge or an
 									if (tbi[(m+1+(n%3))%4]==0) {
