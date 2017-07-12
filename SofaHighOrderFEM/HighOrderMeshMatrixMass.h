@@ -106,7 +106,7 @@ public:
 		EXACT_INTEGRATION=1,
 		NUMERICAL_INTEGRATION=2,
 		AFFINE_ELEMENT_INTEGRATION=3,
-		BEZIER_EXACT_INTEGRATION=4
+        BEZIER_NUMERICAL_INTEGRATION = 4
 	} IntegrationMethod;
 	/// the way the mass should be lumped as a diagonal matrix
 	typedef enum 
@@ -142,10 +142,10 @@ public:
     /// the order of integration for numerical integration
     Data<size_t>	     numericalIntegrationOrder;
     /// the type of numerical integration method chosen
-    Data<size_t>	     numericalIntegrationMethod;
+    Data<std::string>	     numericalIntegrationMethod;
     /// the type of integration method chosen for non linear element.
     Data<std::string>	 d_integrationMethod; 
-    IntegrationMethod    integrationMethod;
+
 	// measure the time spent in assembling the mass matrix
 	Data<Real> d_assemblyTime;
 	// whether each affine element should be assembled with the affine assembly method irrespective to the chosen integration method  
@@ -153,7 +153,8 @@ public:
     /// the type of integration method chosen for non linear element.
     Data<std::string>	 d_lumpingMethod; 
     LumpingMethod    lumpingMethod;
-
+    // the type of integration method for the mass matrix
+    IntegrationMethod    integrationMethod;
 
 protected:
 
@@ -259,10 +260,16 @@ protected:
 		// for each control point store the weight matrix  w_\gamma * density * N_p (\param_gamma) 
 		std::vector<Real> weightLumpedArray;
 		/// barycentric coordinate of the integration point \param_i
+        // tetrahedral barycentric coordinates of integration point
 		Vec4 integrationPoint;
+        // triangular barycentric coordinates of integration point
 		Vec3 integrationPointTriangle;
 		Real weight;
 	};
+    // in the BEZIER_NUMERICAL_INTEGRATION store correspondance between pair of shape function of degree d and shape functions of degree 2d.
+    std::vector<size_t> indexCorrespondance;
+    // for each pair of control point store the weight equal to 1/(p!q!) 
+    std::vector<Real> weightBezierArray;
 
     class VertexMassHandler : public topology::TopologyDataHandler<Point,MassVector>
     {

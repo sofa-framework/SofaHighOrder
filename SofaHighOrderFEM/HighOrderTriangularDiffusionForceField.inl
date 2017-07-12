@@ -301,7 +301,7 @@ template <class DataTypes> HighOrderTriangularDiffusionForceField<DataTypes>::Hi
 	, d_integrationMethod( initData(&d_integrationMethod,std::string("analytical"),"integrationMethod","\"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen,  \"standard\" if standard integration is chosen"))
 	, d_anisotropyParameter( initData(&d_anisotropyParameter,ParameterArray(),"anisotropyParameters","diffusivity parameters if the diffusion is anisotropic "))
 	, d_anisotropyDirection( initData(&d_anisotropyDirection,AnisotropyDirectionArray(),"anisotropyDirection","Directions of anisotropy"))
-	, numericalIntegrationMethod( initData(&numericalIntegrationMethod,(size_t)0,"numericalIntegrationMethod","The type of numerical integration method chosen"))
+	, numericalIntegrationMethod( initData(&numericalIntegrationMethod, std::string("Triangle Gauss"),"numericalIntegrationMethod","The type of numerical integration method chosen"))
     , d_assemblyTime(initData(&d_assemblyTime,(Real)0,"assemblyTime","the time spent in assembling the stiffness matrix. Only updated if printLog is set to true"))
 	 , d_forceAffineAssemblyForAffineElements(initData(&d_forceAffineAssemblyForAffineElements,true,"forceAffineAssemblyForAffineElements","if true affine triangles are always assembled with the closed form formula, Otherwise use the method defined in integrationMethod"))
     , triangleHandler(NULL)
@@ -350,6 +350,11 @@ template <class DataTypes> void HighOrderTriangularDiffusionForceField<DataTypes
     else
     {
         serr << "cannot recognize anisotropy type "<< d_anisotropy.getValue() << ". Must be either \"isotropy\" or \"transverseIsotropy\"  or \"orthotropy\"" << sendl;
+    }
+
+    std::set<typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadratureMethod> qmSet = highOrderTrianGeo->getTriangleNumericalIntegrationDescriptor().getQuadratureMethods();
+    if (qmSet.count(numericalIntegrationMethod.getValue()) == 0) {
+        serr << "cannot recognize numerical integration method  " << numericalIntegrationMethod.getValue() << sendl;
     }
 
     helper::vector<TriangleRestInformation>& triangleInf = *(triangleInfo.beginEdit());

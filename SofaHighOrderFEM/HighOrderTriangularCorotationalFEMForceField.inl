@@ -364,7 +364,7 @@ template <class DataTypes> HighOrderTriangularCorotationalFEMForceField<DataType
 	, d_anisotropyDirection(initData(&d_anisotropyDirection,"anisotropyDirections","the directions of anisotropy"))
 	, numericalIntegrationOrder( initData(&numericalIntegrationOrder,(size_t)2,"integrationOrder","The order of integration for numerical integration"))
 	, d_integrationMethod( initData(&d_integrationMethod,std::string("analytical"),"integrationMethod","\"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen,  \"standard\" if standard integration is chosen"))
-	, numericalIntegrationMethod( initData(&numericalIntegrationMethod,(size_t)0,"numericalIntegrationMethod","The type of numerical integration method chosen"))
+	, numericalIntegrationMethod( initData(&numericalIntegrationMethod, std::string("Triangle Gauss"),"numericalIntegrationMethod","The type of numerical integration method chosen"))
 	 , d_oneRotationPerIntegrationPoint(initData(&d_oneRotationPerIntegrationPoint,false,"oneRotationPerIntegrationPoint","if true then computes one rotation per integration point"))
 	 , d_assemblyTime(initData(&d_assemblyTime,(Real)0,"assemblyTime","the time spent in assembling the stiffness matrix. Only updated if printLog is set to true"))
 	 , d_forceAffineAssemblyForAffineElements(initData(&d_forceAffineAssemblyForAffineElements,true,"forceAffineAssemblyForAffineElements","if true affine triangles are always assembled with the closed form formula, Otherwise use the method defined in integrationMethod"))
@@ -431,6 +431,10 @@ template <class DataTypes> void HighOrderTriangularCorotationalFEMForceField<Dat
     else
     {
         serr << "cannot recognize method "<< d_integrationMethod.getValue() << ". Must be either \"analytical\" or \"numerical\"  or \"standard\"" << sendl;
+    }
+    std::set<typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadratureMethod> qmSet = highOrderTriangleGeo->getTriangleNumericalIntegrationDescriptor().getQuadratureMethods();
+    if (qmSet.count(numericalIntegrationMethod.getValue()) == 0) {
+        serr << "cannot recognize numerical integration method  " << numericalIntegrationMethod.getValue() << sendl;
     }
     helper::vector<TriangleRestInformation>& triangleInf = *(triangleInfo.beginEdit());
     triangleInf.resize(_topology->getNbTriangles());

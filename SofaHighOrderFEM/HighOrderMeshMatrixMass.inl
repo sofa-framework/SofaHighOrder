@@ -13,6 +13,8 @@
 #include <SofaBaseTopology/CommonAlgorithms.h>
 #include <HighOrderTetrahedronSetGeometryAlgorithms.h>
 #include <HighOrderTriangleSetGeometryAlgorithms.h>
+#include <BezierTriangleSetGeometryAlgorithms.h>
+#include <BezierTetrahedronSetGeometryAlgorithms.h>
 #include <HighOrderTriangleSetGeometryAlgorithms.inl>
 #include <SofaBaseTopology/EdgeSetGeometryAlgorithms.h>
 #include <SofaBaseTopology/TriangleSetGeometryAlgorithms.h>
@@ -48,8 +50,8 @@ HighOrderMeshMatrixMass<DataTypes, MassType>::HighOrderMeshMatrixMass()
     , printMass( initData(&printMass, false, "printMass","boolean if you want to get the totalMass") )
     , f_graph( initData(&f_graph,"graph","Graph of the controlled potential") )
     , numericalIntegrationOrder( initData(&numericalIntegrationOrder,(size_t)2,"integrationOrder","The order of integration for numerical integration"))
-    , numericalIntegrationMethod( initData(&numericalIntegrationMethod,(size_t)0,"numericalIntegrationMethod","The type of numerical integration method chosen"))
-    , d_integrationMethod( initData(&d_integrationMethod,std::string("analytical"),"integrationMethod","\"exact\" if closed form expression for high order elements, \"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen"))
+    , numericalIntegrationMethod( initData(&numericalIntegrationMethod, std::string("Tetrahedron Gauss"),"numericalIntegrationMethod","The type of numerical integration method chosen"))
+    , d_integrationMethod( initData(&d_integrationMethod,std::string("analytical"),"integrationMethod","\"exact\" if closed form expression for high order elements, \"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen, \"bezierNumerical\" if optimal numweical integration is chosen"))
     , d_assemblyTime(initData(&d_assemblyTime,(Real)0,"assemblyTime","the time spent in assembling the mass matrix. Only updated if printLog is set to true"))
 	, d_forceAffineAssemblyForAffineElements(initData(&d_forceAffineAssemblyForAffineElements,true,"forceAffineAssemblyForAffineElements","if true affine triangles are always assembled with the closed form formula, Otherwise use the method defined in integrationMethod"))
     , d_lumpingMethod( initData(&d_lumpingMethod,std::string("rowSum"),"lumpingMethod","\"rowSum\" if row-sum method is chosen, \"scaled diagonal\" if scaled diagonal terms is chosen"))
@@ -171,6 +173,7 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::TetrahedronMassHandler::apply
 				sum/=totalVolume;
 				for (j=0;j<nbControlPoints;j++) lumpedVertexMass[j]/=sum;
 			}
+         
 		} else if (MMM->integrationMethod==HighOrderMeshMatrixMass<DataTypes, MassType>::EXACT_INTEGRATION)
 		{
 			const typename DataTypes::VecCoord& p =(MMM->mstate->read(core::ConstVecCoordId::position())->getValue());
@@ -221,55 +224,35 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::TetrahedronMassHandler::apply
 			}
 
 		} else {
-			/// exact computation
-			sofa::helper::vector<topology::TetrahedronIndexVector> tbiArray,tbiDerivArray;
-		
-			
-			MassType tmpMass;
+            sofa::defaulttype::Vec<4, Real> bc;
+            // the number of shape functions of degree 2*d
+            size_t nbOpt = MMM->numericalIntegrationStiffnessDataArray[0].weightArray.size();
+            std::vector<Real> tmpArray(nbOpt);
+            std::fill(tmpArray.begin(), tmpArray.end(), (Real)0);
 
-			tbiArray=MMM->highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArray();
-			tbiDerivArray=MMM->highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArrayOfGivenDegree(degree-1);
-			sofa::helper::vector<topology::HighOrderTetrahedronSetTopologyContainer::LocalTetrahedronIndex> correspondanceArray=
-				MMM->highOrderTetraGeo->getTopologyContainer()->getMapOfTetrahedronIndexArrayFromInferiorDegree();
-			typename DataTypes::Coord dp1,dp2,dp3,dpos,tmp;
-			
-			size_t l,m,rank2;
-			rank=0;
-			for (l=0;l<nbControlPoints;l++) {
-				for (m=l;m<nbControlPoints;m++,rank++) {
-					for (rank2=0,i=0;i<tbiDerivArray.size();++i) 
-					{
-						dp1=MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[i][0]])-
-							MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[i][3]]);
+            // loop through the integration points
+            for (i = 0; i<MMM->numericalIntegrationStiffnessDataArray.size(); ++i) {
 
-						for (j=0;j<tbiDerivArray.size();++j) 
-						{
-							dp2=MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[j][1]])-
-								MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[j][3]]);
-							using topology::cross;
-							tmp=cross<Real>(dp1,dp2);
+                // Compute the Jacobian of the local tetrahedron
+                Real jac = fabs(MMM->highOrderTetraGeo->computeJacobian(tetra, MMM->numericalIntegrationStiffnessDataArray[i].integrationPoint));
+                // update the mass matrix
+                if (lumping == false) {
+                    // look over the shape function of degree 2*d
 
-							// set dp3 to 0 in a generic way
-							std::fill(dp3.begin(),dp3.end(),(Real)0);
-							for (k=0;k<tbiDerivArray.size();++k,++rank2) 
-							{
-								dpos=MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[k][2]])-
-									MMM->highOrderTetraGeo->getPointRestPosition(indexArray[correspondanceArray[k][3]]);
-								dpos*=MMM->bezierRegularMassCoefficientEntryArray[rank][rank2];
-								dp3+=dpos;
-							}
+                    for (j = 0; j < nbOpt; j++) {
+                        tmpArray[j] += MMM->numericalIntegrationStiffnessDataArray[i].weightArray[j] * jac;
+                    }
+                }
 
-							tmpMass=fabs(dp3*tmp);
-							TetrahedronMass[rank]+=tmpMass;
-							lumpedVertexMass[l]+=tmpMass;
-							if (m>l)
-								lumpedVertexMass[m]+=tmpMass;
-						}
+                for (j = 0; j < nbControlPoints; j++) {
+                    lumpedVertexMass[j] += jac*MMM->numericalIntegrationStiffnessDataArray[i].weightLumpedArray[j];
+                }
+            }
+            // compute the mass as a weighted version of the mass array computed for degree 2d
+            for (j = 0; j < nbMassEntries; ++j) {
+                TetrahedronMass[j] = tmpArray[MMM->indexCorrespondance[j]] * MMM->weightBezierArray[j];
+            }
 
-					}
-				}
-
-			}
 		}
 
 		helper::vector<MassType>& my_vertexMassInfo = *MMM->vertexMassInfo.beginEdit();
@@ -287,16 +270,17 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::TetrahedronMassHandler::apply
 			sofa::helper::vector<topology::TetrahedronIndexVector> tbiArray;
 
 			tbiArray=MMM->highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArray();
+            if (lumping == false) {
+                for (rank = 0, l = 0; l < tbiArray.size(); ++l)
+                {
+                    for (m = l; m < tbiArray.size(); ++m, ++rank)
+                    {
+                        std::cerr << "Mass entry [" << (unsigned int)tbiArray[l][0] << " " << (unsigned int)tbiArray[l][1] << " " << (unsigned int)tbiArray[l][2] << " " << (unsigned int)tbiArray[l][3] << "][" <<
+                            (unsigned int)tbiArray[m][0] << " " << (unsigned int)tbiArray[m][1] << " " << (unsigned int)tbiArray[m][2] << " " << (unsigned int)tbiArray[m][3] << "]=" << TetrahedronMass[rank] << std::endl;
 
-			for (rank=0,l=0;l<tbiArray.size();++l)
-			{
-				for (m=l;m<tbiArray.size();++m,++rank)
-				{
-					std::cerr<< "Mass entry ["<<(unsigned int)tbiArray[l][0]<<" "<< (unsigned int)tbiArray[l][1]<<" "<< (unsigned int)tbiArray[l][2]<<" "<<(unsigned int) tbiArray[l][3]<< "]["<<
-						(unsigned int)tbiArray[m][0]<<" "<< (unsigned int)tbiArray[m][1]<<" "<< (unsigned int)tbiArray[m][2]<<" "<< (unsigned int)tbiArray[m][3]<<"]="<<TetrahedronMass[rank]<<std::endl;
-
-				}
-			}
+                    }
+                }
+            }
 		}
 #endif
 	}
@@ -429,50 +413,39 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::TriangleMassHandler::applyCre
 			}
 
 		} else {
-			/// exact computation
-			sofa::helper::vector<topology::TriangleIndexVector> tbiArray,tbiDerivArray;
-		
+            sofa::defaulttype::Vec<3, Real> bc;
+            // the number of shape functions of degree 2*d
+            size_t nbOpt = MMM->numericalIntegrationStiffnessDataArray[0].weightArray.size();
+            std::vector<Real> tmpArray(nbOpt);
+            std::fill(tmpArray.begin(), tmpArray.end(), (Real)0);
+
+            // loop through the integration points
+            for (i = 0; i<MMM->numericalIntegrationStiffnessDataArray.size(); ++i) {
+
+                // the barycentric coordinate
+                bc = MMM->numericalIntegrationStiffnessDataArray[i].integrationPointTriangle;
+                // Compute the Jacobian of the local triangle
+                Real jac = fabs(MMM->highOrderTrianGeo->computeJacobian(trian, MMM->numericalIntegrationStiffnessDataArray[i].integrationPointTriangle));
+
+                // update the mass matrix
+                if (lumping == false) {
+                    // look over the shape function of degree 2*d
+
+                    for (j = 0; j<nbOpt; j++) {
+                        tmpArray[j] += MMM->numericalIntegrationStiffnessDataArray[i].weightArray[j] * jac;
+                    }
+                }
+
+                for (j = 0; j<nbControlPoints; j++) {
+                    lumpedVertexMass[j] += jac*MMM->numericalIntegrationStiffnessDataArray[i].weightLumpedArray[j];
+                }
+            }
+            // compute the mass as a weighted version of the mass array computed for degree 2d
+            for (j = 0; j < nbMassEntries; ++j) {
+                TriangleMass[j] = tmpArray[MMM->indexCorrespondance[j]] * MMM->weightBezierArray[j];
+            }
+
 			
-			MassType tmpMass;
-
-			tbiArray=MMM->highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArray();
-			tbiDerivArray=MMM->highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArrayOfGivenDegree(degree-1);
-			sofa::helper::vector<topology::HighOrderTriangleSetTopologyContainer::LocalTriangleIndex> correspondanceArray=
-				MMM->highOrderTrianGeo->getTopologyContainer()->getMapOfTriangleIndexArrayFromInferiorDegree();
-			typename DataTypes::Coord dp1,dp2,dp3,dpos,tmp;
-			
-			size_t l,m,rank2;
-			rank=0;
-			for (l=0;l<nbControlPoints;l++) {
-				for (m=l;m<nbControlPoints;m++,rank++) {
-					for (rank2=0,i=0;i<tbiDerivArray.size();++i) 
-					{
-						dp1=MMM->highOrderTrianGeo->getPointRestPosition(indexArray[correspondanceArray[i][0]])-
-							MMM->highOrderTrianGeo->getPointRestPosition(indexArray[correspondanceArray[i][2]]);
-
-						
-
-							// set dp3 to 0 in a generic way
-							std::fill(dp3.begin(),dp3.end(),(Real)0);
-							for (k=0;k<tbiDerivArray.size();++k,++rank2) 
-							{
-								dpos=MMM->highOrderTrianGeo->getPointRestPosition(indexArray[correspondanceArray[k][1]])-
-									MMM->highOrderTrianGeo->getPointRestPosition(indexArray[correspondanceArray[k][2]]);
-								dpos*=MMM->bezierRegularMassCoefficientEntryArray[rank][rank2];
-								dp3+=dpos;
-							}
-
-							tmpMass=fabs(component::topology::areaProduct(dp1,dp3));
-							TriangleMass[rank]+=tmpMass;
-							lumpedVertexMass[l]+=tmpMass;
-							if (m>l)
-								lumpedVertexMass[m]+=tmpMass;
-						}
-
-					
-				}
-
-			}
 		}
 
 		helper::vector<MassType>& my_vertexMassInfo = *MMM->vertexMassInfo.beginEdit();
@@ -480,27 +453,28 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::TriangleMassHandler::applyCre
 			my_vertexMassInfo[indexArray[j]]+=lumpedVertexMass[j];
 		}
 #ifdef _DEBUG
-		if (MMM->f_printLog.getValue()) {
-			Real totalMass=0;
-			size_t l,m;
-			for (j=0;j<nbControlPoints;j++) {
-				totalMass+=lumpedVertexMass[j];
-			}
-			std::cerr<< " total mass="<<totalMass << std::endl;
-			sofa::helper::vector<topology::TriangleIndexVector> tbiArray;
+        if (MMM->f_printLog.getValue()) {
+            Real totalMass = 0;
+            size_t l, m;
+            for (j = 0; j < nbControlPoints; j++) {
+                totalMass += lumpedVertexMass[j];
+            }
+            std::cerr << " total mass=" << totalMass << std::endl;
+            sofa::helper::vector<topology::TriangleIndexVector> tbiArray;
 
-			tbiArray=MMM->highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArray();
+            tbiArray = MMM->highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArray();
+            if (lumping == false) {
+                for (rank = 0, l = 0; l < tbiArray.size(); ++l)
+                {
+                    for (m = l; m < tbiArray.size(); ++m, ++rank)
+                    {
+                        std::cerr << "Mass entry [" << (unsigned int)tbiArray[l][0] << " " << (unsigned int)tbiArray[l][1] << " " << (unsigned int)tbiArray[l][2] << "][" <<
+                            (unsigned int)tbiArray[m][0] << " " << (unsigned int)tbiArray[m][1] << " " << (unsigned int)tbiArray[m][2] << "]=" << TriangleMass[rank] << std::endl;
 
-			for (rank=0,l=0;l<tbiArray.size();++l)
-			{
-				for (m=l;m<tbiArray.size();++m,++rank)
-				{
-					std::cerr<< "Mass entry ["<<(unsigned int)tbiArray[l][0]<<" "<< (unsigned int)tbiArray[l][1]<<" "<< (unsigned int)tbiArray[l][2]<<"]["<<
-						(unsigned int)tbiArray[m][0]<<" "<< (unsigned int)tbiArray[m][1]<<" "<< (unsigned int)tbiArray[m][2]<<"]="<<TriangleMass[rank]<<std::endl;
-
-				}
-			}
-		}
+                    }
+                }
+            }
+        }
 #endif
 	}
 }
@@ -1223,8 +1197,8 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 		integrationMethod= NUMERICAL_INTEGRATION;
 	else if (d_integrationMethod.getValue() == "exact") 
 		integrationMethod= EXACT_INTEGRATION;
-	else if (d_integrationMethod.getValue() == "bezierExact") 
-		integrationMethod= BEZIER_EXACT_INTEGRATION;
+	else if (d_integrationMethod.getValue() == "bezierNumerical") 
+		integrationMethod= BEZIER_NUMERICAL_INTEGRATION;
 	else
 	{
 		serr << "cannot recognize method "<< d_integrationMethod.getValue() << ". Must be either  \"exact\", \"analytical\"  \"bezierExact\ or \"numerical\"" << sendl;
@@ -1333,52 +1307,87 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 			}
 		
 		} 
-		if (integrationMethod== BEZIER_EXACT_INTEGRATION) {
-			/// exact computation
-			sofa::helper::vector<topology::TetrahedronIndexVector> tbiDerivArray,multinomialArray;
-			sofa::helper::vector<unsigned char> multinomialScalarArray;
-			
+		if (integrationMethod== BEZIER_NUMERICAL_INTEGRATION) {
+            numericalIntegrationStiffnessDataArray.clear();
+            sofa::component::topology::BezierTetrahedronSetGeometryAlgorithms<DataTypes> *btsga =
+                dynamic_cast< sofa::component::topology::BezierTetrahedronSetGeometryAlgorithms<DataTypes> *>(highOrderTetraGeo);
+            if (btsga) {
+                /// get value of integration points0
+                topology::NumericalIntegrationDescriptor<Real, 4> &nid = highOrderTetraGeo->getTetrahedronNumericalIntegrationDescriptor();
+                typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadraturePointArray qpa = nid.getQuadratureMethod((typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadratureMethod)numericalIntegrationMethod.getValue(),
+                    numericalIntegrationOrder.getValue());
+                size_t i, j, k;
+                sofa::defaulttype::Vec<4, Real> bc;
+                Real weight;
+                // get array of shape function corresponding to 2*degree
+                sofa::helper::vector<topology::TetrahedronIndexVector> tbiArrayOpt;
+                tbiArrayOpt = highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArrayOfGivenDegree(2 * degree);
+                Real factor = (Real)(topology::binomial<typename DataTypes::Real>(degree, degree));
 
-			
-			tbiDerivArray=highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArrayOfGivenDegree(degree-1);
-
-			multinomialArray.resize(5);
-			multinomialScalarArray.resize(5);
-			multinomialScalarArray[0]=degree-1;
-			multinomialScalarArray[1]=degree-1;
-			multinomialScalarArray[2]=degree-1;
-			multinomialScalarArray[3]=degree;
-			multinomialScalarArray[4]=degree;
-			size_t i,j,k,l,m,rank;
-			Real factor=(degree*degree*degree*density)/(6*topology::multinomial<Real>(5*degree-3,multinomialScalarArray)*topology::binomial<Real>(5*degree-3,3));
-
-			rank=0;
-			for (l=0;l<nbControlPoints;l++) {
-				multinomialArray[3]=tbiArray[l];
-				for (m=l;m<nbControlPoints;m++,rank++) {
-					multinomialArray[4]=tbiArray[m];
-					std::vector<Real> coeffArray;
-					for (i=0;i<tbiDerivArray.size();++i) 
-					{
-						multinomialArray[0]=tbiDerivArray[i];
-						for (j=0;j<tbiDerivArray.size();++j) 
-						{
-							multinomialArray[1]=tbiDerivArray[j];
-							for (k=0;k<tbiDerivArray.size();++k) 
-							{
-								multinomialArray[2]=tbiDerivArray[k];
-								coeffArray.push_back(topology::multinomialVector<4,Real>(multinomialArray)*factor);
-
-							}
-						}
-					}
-					bezierRegularMassCoefficientEntryArray.push_back(coeffArray);
+                // loop through the integration points
+                for (i = 0; i < qpa.size(); ++i) {
+                    NumericalIntegrationMassData nimd;
+                    typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadraturePoint qp = qpa[i];
+                    // the barycentric coordinate
+                    nimd.integrationPoint = qp.first;
+                    // the weight of the integration point
+                    weight = qp.second;
+                    //			nimd.integrationWeight=qp.second;
 
 
-				}
+                    for (j = 0; j < tbiArrayOpt.size(); ++j) {
+                        Real val = btsga->computeShapeFunctionOfGivenDegree(tbiArrayOpt[j], qp.first, 2 * degree);
+                        val /= factor;
+                        nimd.weightArray.push_back(val*weight*density);
+                    }
 
-			}
-		
+                    for (j = 0; j < tbiArray.size(); ++j) {
+                        Real val = btsga->computeShapeFunction(tbiArray[j], qp.first);
+                        nimd.weightLumpedArray.push_back(weight*density*val);
+                    }
+
+                    numericalIntegrationStiffnessDataArray.push_back(nimd);
+                }
+
+                weightBezierArray.clear();
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    tbi1 = tbiArray[j];
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        tbi2 = tbiArray[k];
+                        weightBezierArray.push_back(topology::binomialVector<4, typename DataTypes::Real>(tbi1, tbi2));
+                    }
+                }
+                indexCorrespondance.clear();
+                // store correspondance index
+                sofa::helper::vector<topology::TetrahedronIndexVector>::iterator itv;
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        tbi2 = tbiArray[k] + tbiArray[j];
+                        itv = std::find(tbiArrayOpt.begin(), tbiArrayOpt.end(), tbiArray[k] + tbiArray[j]);
+                        assert(itv != tbiArrayOpt.end());
+                        // store the rank of  tbiArray[k] + tbiArray[j] in array tbiArrayOpt
+                        indexCorrespondance.push_back(itv - tbiArrayOpt.begin());
+                    }
+                }
+#ifdef SOFA_DEBUG
+                typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadraturePoint qp = qpa[0];
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        Real val = highOrderTetraGeo->computeShapeFunction(tbiArray[j], qp.first)*highOrderTetraGeo->computeShapeFunction(tbiArray[k], qp.first);
+                        Real val2 = btsga->computeShapeFunctionOfGivenDegree(tbiArray[j] + tbiArray[k], qp.first, 2 * degree);
+
+                        val2 *= (Real)(sofa::helper::factorial(tbiArray[j][0] + tbiArray[k][0])*sofa::helper::factorial(tbiArray[j][1] + tbiArray[k][1])*sofa::helper::factorial(tbiArray[j][2] + tbiArray[k][2])*sofa::helper::factorial(tbiArray[j][3] + tbiArray[k][3]));
+                        val2 /= (sofa::helper::factorial(tbiArray[j][0])*sofa::helper::factorial(tbiArray[j][1])*sofa::helper::factorial(tbiArray[j][2])*sofa::helper::factorial(tbiArray[j][3]));
+                        val2 /= factor;
+                        val2 /= (sofa::helper::factorial(tbiArray[k][0])*sofa::helper::factorial(tbiArray[k][1])*sofa::helper::factorial(tbiArray[k][2])*sofa::helper::factorial(tbiArray[k][3]));
+                        assert(fabs(val2 - val) < 1e-6);
+                    }
+                }
+#endif
+            }
+            else {
+                serr << "Error : could not find a BezierTetrahedronSetGeometryAlgorithms component ! \n Bezier shape functions are required with the BezierNumerical integration method\n";
+            }
 		} else if (integrationMethod== EXACT_INTEGRATION) {
 			size_t l,m,n;
 			size_t indr[3],rank;
@@ -1519,51 +1528,89 @@ void HighOrderMeshMatrixMass<DataTypes, MassType>::init()
 				}
 			}
 		} 
-		if (integrationMethod== BEZIER_EXACT_INTEGRATION) {
-			/// exact computation
-			sofa::helper::vector<topology::TriangleIndexVector> tbiDerivArray,multinomialArray;
-			sofa::helper::vector<unsigned char> multinomialScalarArray;
-			
+		if (integrationMethod== BEZIER_NUMERICAL_INTEGRATION) {
+            numericalIntegrationStiffnessDataArray.clear();
+            sofa::component::topology::BezierTriangleSetGeometryAlgorithms<DataTypes> *btsga =
+                dynamic_cast< sofa::component::topology::BezierTriangleSetGeometryAlgorithms<DataTypes> *>(highOrderTrianGeo);
+            if (btsga) {
+                /// get value of integration points0
+                topology::NumericalIntegrationDescriptor<Real, 3> &nid = highOrderTrianGeo->getTriangleNumericalIntegrationDescriptor();
+                typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadraturePointArray qpa = nid.getQuadratureMethod((typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadratureMethod)numericalIntegrationMethod.getValue(),
+                    numericalIntegrationOrder.getValue());
+                size_t i, j, k;
+                sofa::defaulttype::Vec<3, Real> bc;
+                Real weight;
+                // get array of shape function corresponding to 2*degree
+                sofa::helper::vector<topology::TriangleIndexVector> tbiArrayOpt;
+                tbiArrayOpt = highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArrayOfGivenDegree(2 * degree);
+                Real factor = (Real)(topology::binomial<typename DataTypes::Real>(degree, degree));
 
-			
-			tbiDerivArray=highOrderTrianGeo->getTopologyContainer()->getTriangleIndexArrayOfGivenDegree(degree-1);
-
-			multinomialArray.resize(4);
-			multinomialScalarArray.resize(4);
-			multinomialScalarArray[0]=degree-1;
-			multinomialScalarArray[1]=degree-1;
-			multinomialScalarArray[2]=degree;
-			multinomialScalarArray[3]=degree;
-			size_t i,j,k,l,m,rank;
-			Real factor=(degree*degree*density)/(6*topology::multinomial<Real>(4*degree-2,multinomialScalarArray)*topology::binomial<Real>(4*degree-2,2));
-
-			rank=0;
-			for (l=0;l<nbControlPoints;l++) {
-				multinomialArray[2]=tbiArray[l];
-				for (m=l;m<nbControlPoints;m++,rank++) {
-					multinomialArray[3]=tbiArray[m];
-					std::vector<Real> coeffArray;
-					for (i=0;i<tbiDerivArray.size();++i) 
-					{
-						multinomialArray[0]=tbiDerivArray[i];
-						for (j=0;j<tbiDerivArray.size();++j) 
-						{
-							multinomialArray[1]=tbiDerivArray[j];
-
-							coeffArray.push_back(topology::multinomialVector<3,Real>(multinomialArray)*factor);
-
-						}
-
-					}
-					bezierRegularMassCoefficientEntryArray.push_back(coeffArray);
+                // loop through the integration points
+                for (i = 0; i < qpa.size(); ++i) {
+                    NumericalIntegrationMassData nimd;
+                    typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadraturePoint qp = qpa[i];
+                    // the barycentric coordinate
+                    nimd.integrationPointTriangle = qp.first;
+                    // the weight of the integration point
+                    weight = qp.second;
+                    //			nimd.integrationWeight=qp.second;
 
 
-				}
+                    for (j = 0; j < tbiArrayOpt.size(); ++j) {
+                        Real val = btsga->computeShapeFunctionOfGivenDegree(tbiArrayOpt[j], qp.first, 2 * degree);
+                        val /= factor;
+                        nimd.weightArray.push_back(val*weight*density);
+                    }
 
-			}
+                    for (j = 0; j < tbiArray.size(); ++j) {
+                        Real val = btsga->computeShapeFunction(tbiArray[j], qp.first);
+                        nimd.weightLumpedArray.push_back(weight*density*val);
+                    }
+
+                    numericalIntegrationStiffnessDataArray.push_back(nimd);
+                }
+
+                weightBezierArray.clear();
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    tbi1 = tbiArray[j];
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        tbi2 = tbiArray[k];
+                        weightBezierArray.push_back(topology::binomialVector<3, typename DataTypes::Real>(tbi1, tbi2));
+                    }
+                }
+                indexCorrespondance.clear();
+                // store correspondance index
+                sofa::helper::vector<topology::TriangleIndexVector>::iterator itv;
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        tbi2 = tbiArray[k] + tbiArray[j];
+                        itv = std::find(tbiArrayOpt.begin(), tbiArrayOpt.end(), tbiArray[k] + tbiArray[j]);
+                        assert(itv != tbiArrayOpt.end());
+                        // store the rank of  tbiArray[k] + tbiArray[j] in array tbiArrayOpt
+                        indexCorrespondance.push_back(itv - tbiArrayOpt.begin());
+                    }
+                }
+#ifdef SOFA_DEBUG
+                typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadraturePoint qp = qpa[0];
+                for (j = 0; j < tbiArray.size(); ++j) {
+                    for (k = j; k < tbiArray.size(); ++k) {
+                        Real val = highOrderTrianGeo->computeShapeFunction(tbiArray[j], qp.first)*highOrderTrianGeo->computeShapeFunction(tbiArray[k], qp.first);
+                        Real val2 = btsga->computeShapeFunctionOfGivenDegree(tbiArray[j]+ tbiArray[k], qp.first, 2 * degree);
+         
+                        val2 *= (Real)(sofa::helper::factorial(tbiArray[j][0] + tbiArray[k][0])*sofa::helper::factorial(tbiArray[j][1] + tbiArray[k][1])*sofa::helper::factorial(tbiArray[j][2] + tbiArray[k][2]));
+                        val2/= (sofa::helper::factorial(tbiArray[j][0])*sofa::helper::factorial(tbiArray[j][1])*sofa::helper::factorial(tbiArray[j][2]));
+                        val2 /= factor;
+                        val2 /= (sofa::helper::factorial(tbiArray[k][0])*sofa::helper::factorial(tbiArray[k][1])*sofa::helper::factorial(tbiArray[k][2]));
+                        assert(fabs(val2 - val) < 1e-6);
+                    }
+                }
+#endif
+            } else {
+                serr << "Error : could not find a BezierTriangleSetGeometryAlgorithms component ! \n Bezier shape functions are required with the BezierNumerical integration method\n";
+            }
 		
 		} else if (integrationMethod== EXACT_INTEGRATION) {
-			size_t l,m,n;
+			size_t l,m;
 			size_t indr[2],rank;
 			Real val;
 			for (l=0;l<nbControlPoints;l++) {

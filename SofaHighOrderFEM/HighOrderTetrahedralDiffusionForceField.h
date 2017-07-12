@@ -102,7 +102,8 @@ public:
 		AFFINE_ELEMENT_INTEGRATION=1,
 		NUMERICAL_INTEGRATION=2,
 		STANDARD_INTEGRATION=3,
-		NUMERICAL_INTEGRATION_2=4
+        BEZIER_NUMERICAL_INTEGRATION = 4,
+		NUMERICAL_INTEGRATION_2=5
 	} IntegrationMethod;
 
 		/// the way the stiffness matrix should be computed on HighOrder elements
@@ -249,7 +250,7 @@ public:
 	/// the order of integration for numerical integration
 	Data<size_t>	     numericalIntegrationOrder;
 	/// the type of numerical integration method chosen
-	Data<size_t>	     numericalIntegrationMethod;
+	Data<std::string>	     numericalIntegrationMethod;
 	Data<Real> d_diffusivity; // stiffness coefficient for isotropic elasticity;
 	/// anisotropy parameters and directions
 	Data<ParameterArray> d_anisotropyParameter;
