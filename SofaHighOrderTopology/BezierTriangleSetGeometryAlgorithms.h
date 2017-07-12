@@ -74,6 +74,11 @@ public:
 	virtual Real getRegularMassCoefficient(const TriangleIndexVector tbi1, const TriangleIndexVector tbi2,const size_t indr[2]);
 	/// returns the stiffness coefficient used to compute the stiffness matrix when a triangle is affine 
 	virtual Mat33 getAffineStiffnessCoefficientMatrix(const TriangleIndexVector tbi1, const TriangleIndexVector tbi2);
+    /// computes the shape function for any degree
+    Real computeShapeFunctionOfGivenDegree(const TriangleIndexVector tbi, const Vec3 barycentricCoordinate, const HighOrderDegreeType deg);
+    /// computes the shape function gradient for any degree
+    Vec3 computeShapeFunctionDerivativesOfGivenDegree(const TriangleIndexVector tbi, const Vec3 barycentricCoordinate, const HighOrderDegreeType deg);
+
 	    template<class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {

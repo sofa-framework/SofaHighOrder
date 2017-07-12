@@ -97,11 +97,26 @@ typename DataTypes::Real BezierTriangleSetGeometryAlgorithms<DataTypes>::compute
 		val*=(*it).second;
 		return(val);
 	} else {
-		val*=multinomial(tbi[0]+tbi[1]+tbi[2],tbi);
-		return(val);
+        Real val2 = multinomial(this->degree, tbi);
+        bernsteinCoeffMap.insert(std::pair<TriangleIndexVector, Real>(tbi, val2));
+        return(val*val2);
 	}
 }
- 
+template<class DataTypes>
+typename DataTypes::Real BezierTriangleSetGeometryAlgorithms<DataTypes>::computeShapeFunctionOfGivenDegree(const TriangleIndexVector tbi, const Vec3 barycentricCoordinate, const HighOrderDegreeType deg)
+{
+    Real  val = pow(barycentricCoordinate[0], tbi[0])*pow(barycentricCoordinate[1], tbi[1])*pow(barycentricCoordinate[2], tbi[2]);
+    typename std::map<TriangleIndexVector, Real>::iterator it = bernsteinCoeffMap.find(tbi);
+    if (it != bernsteinCoeffMap.end()) {
+        val *= (*it).second;
+        return(val);
+    }
+    else {
+        Real val2 = multinomial(deg , tbi);
+        bernsteinCoeffMap.insert(std::pair<TriangleIndexVector, Real>(tbi, val2));
+        return(val*val2);
+    }
+}
 template<class DataTypes>
 void BezierTriangleSetGeometryAlgorithms<DataTypes>::computeNodalValueDerivatives(const size_t triangleIndex, const Vec3 barycentricCoordinate,  const VecCoord& p, Deriv dpos[4])
 {
@@ -312,7 +327,16 @@ void BezierTriangleSetGeometryAlgorithms<DataTypes>::computeDeCasteljeauPoints(c
              dval[i]=(Real)tbi[i]*val/barycentricCoordinate[i];
      return dval;
  }
-
+ template<class DataTypes>
+ typename BezierTriangleSetGeometryAlgorithms<DataTypes>::Vec3 BezierTriangleSetGeometryAlgorithms<DataTypes>::computeShapeFunctionDerivativesOfGivenDegree(const TriangleIndexVector tbi, const Vec3 barycentricCoordinate, const HighOrderDegreeType deg)
+ {
+     Real  val = computeShapeFunctionOfGivenDegree(tbi, barycentricCoordinate, deg);
+     Vec3 dval(0, 0, 0);
+     for (unsigned i = 0; i<3; ++i)
+         if (tbi[i] && barycentricCoordinate[i])
+             dval[i] = (Real)tbi[i] * val / barycentricCoordinate[i];
+     return dval;
+ }
  template<class DataTypes>
  typename BezierTriangleSetGeometryAlgorithms<DataTypes>::Mat33 BezierTriangleSetGeometryAlgorithms<DataTypes>::computeShapeFunctionHessian(const TriangleIndexVector tbi, const Vec3 barycentricCoordinate)
  {

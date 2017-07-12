@@ -100,11 +100,28 @@ typename DataTypes::Real BezierTetrahedronSetGeometryAlgorithms<DataTypes>::comp
 		val*=(*it).second;
 		return(val);
 	} else {
-		val*=multinomial(tbi[0]+tbi[1]+tbi[2]+tbi[3],tbi);
-		return(val);
+        Real val2 = multinomial(tbi[0] + tbi[1] + tbi[2] + tbi[3], tbi);
+        bernsteinCoeffMap.insert(std::pair<TetrahedronIndexVector, Real>(tbi, val2));
+        return(val*val2);
 	}
 }
- 
+
+template<class DataTypes>
+typename DataTypes::Real BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeShapeFunctionOfGivenDegree(const TetrahedronIndexVector tbi, const Vec4 barycentricCoordinate, const HighOrderDegreeType deg)
+{
+    assert((tbi[0] + tbi[1] + tbi[2] + tbi[3]) == deg);
+    Real  val = pow(barycentricCoordinate[0], tbi[0])*pow(barycentricCoordinate[1], tbi[1])*pow(barycentricCoordinate[2], tbi[2])*pow(barycentricCoordinate[3], tbi[3]);
+    typename std::map<TetrahedronIndexVector, Real>::iterator it = bernsteinCoeffMap.find(tbi);
+    if (it != bernsteinCoeffMap.end()) {
+        val *= (*it).second;
+        return(val);
+    }
+    else {
+        Real val2= multinomial(tbi[0] + tbi[1] + tbi[2] + tbi[3], tbi);
+        bernsteinCoeffMap.insert(std::pair<TetrahedronIndexVector, Real>(tbi, val2));
+        return(val*val2);
+    }
+}
 template<class DataTypes>
 void BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeNodalValueDerivatives(const size_t tetrahedronIndex, const Vec4 barycentricCoordinate,  const VecCoord& p, Deriv dpos[4])
 {
@@ -171,6 +188,7 @@ void BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeNodalValueDerivat
 
 	}
 }
+
 
 template<class DataTypes>
  typename BezierTetrahedronSetGeometryAlgorithms<DataTypes>::Real 
@@ -321,7 +339,16 @@ void BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeDeCasteljeauPoint
              dval[i]=(Real)tbi[i]*val/barycentricCoordinate[i];
      return dval;
  }
-
+ template<class DataTypes>
+ typename BezierTetrahedronSetGeometryAlgorithms<DataTypes>::Vec4 BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeShapeFunctionDerivativesOfGivenDegree(const TetrahedronIndexVector tbi, const Vec4 barycentricCoordinate, const HighOrderDegreeType deg)
+ {
+     Real  val = computeShapeFunctionOfGivenDegree(tbi, barycentricCoordinate,deg);
+     Vec4 dval(0, 0, 0, 0);
+     for (unsigned i = 0; i<4; ++i)
+         if (tbi[i] && barycentricCoordinate[i])
+             dval[i] = (Real)tbi[i] * val / barycentricCoordinate[i];
+     return dval;
+ }
  template<class DataTypes>
  typename BezierTetrahedronSetGeometryAlgorithms<DataTypes>::Mat44 BezierTetrahedronSetGeometryAlgorithms<DataTypes>::computeShapeFunctionHessian(const TetrahedronIndexVector tbi, const Vec4 barycentricCoordinate)
  {

@@ -78,7 +78,12 @@ public:
 	virtual Real getRegularMassCoefficient(const TetrahedronIndexVector tbi1, const TetrahedronIndexVector tbi2,const size_t indr[3]);
 	/// returns the stiffness coefficient used to compute the stiffness matrix when a tetrahedron is affine 
 	virtual Mat44 getAffineStiffnessCoefficientMatrix(const TetrahedronIndexVector tbi1, const TetrahedronIndexVector tbi2);
-	    template<class T>
+	   
+    /// computes the shape function for any degree
+    Real computeShapeFunctionOfGivenDegree(const TetrahedronIndexVector tbi, const Vec4 barycentricCoordinate, const HighOrderDegreeType deg);
+    /// computes the shape function gradient for any degree
+    Vec4 computeShapeFunctionDerivativesOfGivenDegree(const TetrahedronIndexVector tbi, const Vec4 barycentricCoordinate, const HighOrderDegreeType deg);
+    template<class T>
     static bool canCreate(T*& obj, core::objectmodel::BaseContext* context, core::objectmodel::BaseObjectDescription* arg)
     {
         return core::objectmodel::BaseObject::canCreate(obj, context, arg);
