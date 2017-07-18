@@ -17,6 +17,8 @@ namespace topology
 using core::topology::BaseMeshTopology;
 
 
+template< typename Real, int N> typename NumericalIntegrationDescriptor<Real, N>::QuadraturePointArray TetrahedronConicalRule(const size_t d);
+
 /**
 * A class that provides geometry information on an TetrahedronSet.
 */
@@ -56,6 +58,8 @@ protected:
 	sofa::helper::vector<TetrahedronIndexVector> tbiArray;
 	/// the list of edges of the Bezier Tetrahedron used in the draw function
     std::set< std::pair<Edge,size_t> > bezierTetrahedronEdgeSet;
+    bool initializedNewCubatureTables;
+    void defineNewTetrahedronCubaturePoints();
 
 	/// constructor 
 	HighOrderTetrahedronSetGeometryAlgorithms();

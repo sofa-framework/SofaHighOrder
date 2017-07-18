@@ -17,8 +17,9 @@ namespace topology
 using core::topology::BaseMeshTopology;
 
 
+template< typename Real, int N> typename NumericalIntegrationDescriptor<Real, N>::QuadraturePointArray TriangleConicalRule(const size_t d);
 /**
-* A class that provides geometry information on an TriangleSet.
+* A class that provides geometry information on a High Order Triangle mesh 
 */
 template < class DataTypes >
 class HighOrderTriangleSetGeometryAlgorithms : public TriangleSetGeometryAlgorithms<DataTypes>
@@ -54,7 +55,10 @@ protected:
 	sofa::helper::vector<TriangleIndexVector> tbiArray;
 	/// the list of edges of the Bezier Triangle used in the draw function
     std::set<std::pair<Edge,size_t> > bezierTriangleEdgeSet;
-
+    // if the new cubature tables have been added
+    bool initializedNewCubatureTables;
+    // add new cubature rules
+    void defineNewTriangleCubaturePoints();
 	/// constructor 
 	HighOrderTriangleSetGeometryAlgorithms();
     virtual ~HighOrderTriangleSetGeometryAlgorithms() {}
