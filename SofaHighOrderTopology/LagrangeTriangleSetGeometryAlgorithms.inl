@@ -21,9 +21,7 @@ namespace topology
 
 
 
- size_t factorialTVI(TriangleIndexVector tvi) {
-	 return (lfactorial(tvi[0])*lfactorial(tvi[1])*lfactorial(tvi[2]));
- }
+
  size_t moduleTVI3(TriangleIndexVector tvi) {
 	 return (tvi[0]+tvi[1]+tvi[2]);
 }

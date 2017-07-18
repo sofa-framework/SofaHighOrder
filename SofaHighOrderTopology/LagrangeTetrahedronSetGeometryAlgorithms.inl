@@ -23,9 +23,7 @@ const unsigned int edgesInTetrahedronArray[6][2] = {{0,1}, {0,2}, {0,3}, {1,2}, 
  size_t moduleTVI(TetrahedronIndexVector tvi) {
 	 return (tvi[0]+tvi[1]+tvi[2]+tvi[3]);
  }
- size_t factorialTVI(TetrahedronIndexVector tvi) {
-	 return (lfactorial(tvi[0])*lfactorial(tvi[1])*lfactorial(tvi[2])*lfactorial(tvi[3]));
- }
+
 
 
 template< class DataTypes>

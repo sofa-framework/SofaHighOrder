@@ -794,7 +794,13 @@ bool HighOrderTriangleSetTopologyContainer::checkHighOrderTriangleTopology()
 	#endif
 	return( true);
 }
+size_t  factorialTVI(TriangleIndexVector tvi) {
+    return (lfactorial(tvi[0])*lfactorial(tvi[1])*lfactorial(tvi[2]));
+}
 
+size_t  factorialTVI(TetrahedronIndexVector tvi) {
+    return (lfactorial(tvi[0])*lfactorial(tvi[1])*lfactorial(tvi[2])*lfactorial(tvi[3]));
+}
 } // namespace topology
 
 } // namespace component
