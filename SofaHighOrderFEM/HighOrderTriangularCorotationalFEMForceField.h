@@ -80,6 +80,8 @@ public:
     typedef Vec<2,Real> Vec2;
     typedef Vec<3,Real> Vec3;
     typedef Vec<4,Real> Vec4;
+    typedef Vec<9, Real> Vec9;
+    typedef Vec<9, int> Vec9Int;
 
     typedef StdVectorTypes< Vec2, Vec2, Real >     GeometricalTypes ; /// assumes the geometry object type is 2D
 	typedef typename sofa::component::topology::HighOrderTriangleSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
@@ -130,6 +132,10 @@ protected:
 	std::vector<Vec3> affineStiffnessCoefficientArray;
 	// the array where stiffness coefficients are stored for affine elements of degree < 5 
 	weightArrayPointer affineStiffnessCoefficientPreStoredArray;
+    // for Bezier numerical integration store the fixed coefficients independent from the point of integration
+    std::vector<Vec9> bezierCoefficientArray;
+    // for Bezier numerical integration store the index mapping 
+    std::vector<Vec9Int> bezierMappingArray;
 		// the data stored for each integration point
 	struct NumericalIntegrationStiffnessData {
 		// the weight of the integration point
@@ -138,6 +144,8 @@ protected:
 		std::vector<Vec3> weightArray;
 		// for each pair of control point store the weight matrix 6 w_\gamma * dN_p/d\param_i(\param_gamma) *  dN_q/d\param_j (\param_gamma)
 		weightArrayPointer arrayPointer;
+        // for Bezier numerical integration store the coefficients that depend on the integration points
+        std::vector<Real> weightBezierArray;
 		// for each control point  store the derivative of the shape functions
 		std::vector<Deriv> coefficientArray;
 		/// barycentric coordinate of the integration point \param_i

@@ -16,6 +16,7 @@
 #include <sofa/defaulttype/MatSym.h>
 #include <sofa/helper/system/thread/CTime.h>
 
+
 namespace sofa
 {
 
@@ -24,6 +25,7 @@ namespace component
 namespace topology
 {
 	template< class DataTypes> class HighOrderTetrahedronSetGeometryAlgorithms;
+
 }
 namespace forcefield
 {
@@ -76,10 +78,13 @@ public:
 	typedef Mat<1540,6,Real>    Mat1540x6  ;
 	typedef Vec<1540,Real>		Vec1540  ;
 
+
     // In case of non 3D template
     typedef Vec<3,Real> Vec3;
     typedef Vec<4,Real> Vec4;
 	typedef Vec<6,Real> Vec6;
+    typedef Vec<16, Real> Vec16;
+    typedef Vec<16, int> Vec16Int;
 
 
 	// Vectors GPU compatible
@@ -144,10 +149,15 @@ protected:
 		void updateResult(size_t degree,weightArrayPointer & wap,Vec6 &input);
 		void updateArray(size_t degree,sofa::helper::vector<Real> &array);
 	};
+  
 	// the array where stiffness coefficients are stored for affine elements.
 	std::vector<Vec6> affineStiffnessCoefficientArray;
-	// the array where stiffness coefficients are stored for affine elements of degree < 5 
-	weightArrayPointer affineStiffnessCoefficientPreStoredArray;
+    // the array where stiffness coefficients are stored for affine elements of degree < 5 
+    weightArrayPointer affineStiffnessCoefficientPreStoredArray;
+    // for Bezier numerical integration store the fixed coefficients independent from the point of integration
+    std::vector<Vec16> bezierCoefficientArray;
+    // for Bezier numerical integration store the index mapping 
+    std::vector<Vec16Int> bezierMappingArray;
 	// the data stored for each integration point
 	struct NumericalIntegrationStiffnessData {
 		// the weight of the integration point
@@ -156,6 +166,8 @@ protected:
 		std::vector<Mat4x4> weightArray;
 		// for each pair of control point store the weight matrix 6 w_\gamma * dN_p/d\param_i(\param_gamma) *  dN_q/d\param_j (\param_gamma)
 		std::vector<Vec6> weightVectorizedArray;
+        // for Bezier numerical integration store the coefficients that depend on the integration points
+        std::vector<Real> weightBezierArray;
 		// for each control point  store the derivative of the shape functions
 		std::vector<Vec3> coefficientArray;
 		weightArrayPointer arrayPointer;
@@ -230,8 +242,7 @@ protected:
 	/// Pointer to mechanical mechanicalObject
 	MechanicalObject<MechanicalTypes> *mechanicalObject;
 	sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<MechanicalTypes>* highOrderTetraGeo;
-
-
+    
     bool updateMatrix;
     bool updateTopologyInfo;
 	 
@@ -280,6 +291,7 @@ public:
     void updateLameCoefficients();
 
 	void computeTetrahedronStiffnessEdgeMatrix(const Vec3 position[4],Vec6 &edgeStiffness);
+
 
 	friend class FTCFTetrahedronHandler;
 

@@ -82,12 +82,16 @@ public:
 	typedef Mat<2,6,Real>       Mat2x6  ;
 //	typedef Mat<9,6,Real>       Mat9x6  ;
 	typedef Mat<6,9,Real>       Mat6x9  ;
+
+
 	typedef typename defaulttype::MatSym<3,Real> MatrixSym;
     // In case of non 3D template
     typedef Vec<3,Real> Vec3;
     typedef Vec<4,Real> Vec4;
     typedef Vec<6,Real> Vec6;
     typedef Vec<9,Real> Vec9;
+    typedef Vec<16, Real> Vec16;
+    typedef Vec<16, int> Vec16Int;
     typedef StdVectorTypes< Vec3, Vec3, Real >     GeometricalTypes ; /// assumes the geometry object type is 3D
 	typedef typename sofa::component::topology::HighOrderTetrahedronSetGeometryAlgorithms<GeometricalTypes>::VecPointID VecPointID;
 
@@ -103,14 +107,14 @@ public:
     } RotationDecompositionMethod;
 
 	/// the way the stiffness matrix should be computed on HighOrder elements
-	typedef enum 
-	{
+    typedef enum
+    {
         AFFINE_ELEMENT_INTEGRATION = 1,
         NUMERICAL_INTEGRATION = 2,
         STANDARD_INTEGRATION = 3,
         BEZIER_NUMERICAL_INTEGRATION = 4,
         NUMERICAL_INTEGRATION_2 = 5
-	} IntegrationMethod;
+    } IntegrationMethod;
 
 		/// the way the stiffness matrix should be computed on HighOrder elements
 	typedef enum 
@@ -137,6 +141,10 @@ protected:
 	std::vector<Vec6> affineStiffnessCoefficientArray;
 	// the array where stiffness coefficients are stored for affine elements of degree < 5 
 	weightArrayPointer affineStiffnessCoefficientPreStoredArray;
+    // for Bezier numerical integration store the fixed coefficients independent from the point of integration
+    std::vector<Vec16> bezierCoefficientArray;
+    // for Bezier numerical integration store the index mapping 
+    std::vector<Vec16Int> bezierMappingArray;
 		// the data stored for each integration point
 	struct NumericalIntegrationStiffnessData {
 		// the weight of the integration point
@@ -145,6 +153,8 @@ protected:
 		std::vector<Vec6> weightArray;
 		// for each pair of control point store the weight matrix 6 w_\gamma * dN_p/d\param_i(\param_gamma) *  dN_q/d\param_j (\param_gamma)
 		std::vector<Mat4x4> weightArray4x4;
+        // for Bezier numerical integration store the coefficients that depend on the integration points
+        std::vector<Real> weightBezierArray;
 		weightArrayPointer arrayPointer;
 		// for each control point  store the derivative of the shape functions
 		std::vector<Deriv> coefficientArray;

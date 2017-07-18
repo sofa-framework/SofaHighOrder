@@ -9,10 +9,12 @@
 #include <sofa/helper/gl/template.h>
 #include <SofaBaseTopology/TopologyData.inl>
 #include <HighOrderTetrahedronSetGeometryAlgorithms.h>
+#include <BezierTetrahedronSetGeometryAlgorithms.h>
 #include <sofa/core/behavior/ForceField.inl>
-#include <SofaBaseTopology/CommonAlgorithms.h>
+
 #include <sofa/helper/decompose.h>
 #include <boost/make_shared.hpp>
+#include "GenericMatrixManipulator.inl"
 
 namespace sofa
 {
@@ -274,6 +276,53 @@ void HighOrderTetrahedralDiffusionForceField<DataTypes>::FTCFTetrahedronHandler:
 				helper::system::thread::ctime_t endUpdateMat=helper::system::thread::CTime::getTime();
 				ff->totalUpdateMat+=endUpdateMat-startUpdateMat;
 			}
+        }
+        else if (ff->integrationMethod == HighOrderTetrahedralDiffusionForceField<DataTypes>::BEZIER_NUMERICAL_INTEGRATION) {
+            helper::system::thread::ctime_t startUpdateMat = helper::system::thread::CTime::getTime();
+            sofa::defaulttype::Vec<4, Real> bc;
+
+            std::vector< sofa::defaulttype::Vec<6, Real> > reducedStiffness;
+            assert(ff->numericalIntegrationStiffnessDataArray.size() > 0);
+            size_t numberReducedEntries = ff->numericalIntegrationStiffnessDataArray[0].weightBezierArray.size();
+            reducedStiffness.resize(numberReducedEntries);
+            // loop through the integration points
+            for (i = 0; i < ff->numericalIntegrationStiffnessDataArray.size(); ++i) {
+
+                // the barycentric coordinate
+                bc = ff->numericalIntegrationStiffnessDataArray[i].integrationPoint;
+                // Compute the local tetrahedron by storing in point the 4 derivatives of the shape functions  
+                ff->highOrderTetraGeo->computeNodalValueDerivatives(tetrahedronIndex, bc, restPosition, point);
+                // compute the edge stiffness associated with that local tetrahedron
+                ff->computeTetrahedronStiffnessEdgeMatrix(point, edgeStiffness);
+                for (j = 0; j < numberReducedEntries; ++j) {
+                    reducedStiffness[j] += ff->numericalIntegrationStiffnessDataArray[i].weightBezierArray[j] * edgeStiffness;
+                }
+            }
+            size_t r;
+            for (i = 0; i < nbStiffnessEntries; ++i) {
+                sofa::defaulttype::Vec<16, int>  &mapping = ff->bezierMappingArray[i];
+                for (rank = 0, j = 0; j < 4; ++j) {
+                    for (k = j+1; k < 4;  ++k,++rank) {
+                        r = j * 4 + k;
+                        if (mapping[r] >= 0) 
+                        my_tinfo.stiffnessVector[i] += ff->bezierCoefficientArray[i][r] * reducedStiffness[(size_t)mapping[r]][rank];
+                        r = k * 4 + j;
+                        if (mapping[r] >= 0)
+                        my_tinfo.stiffnessVector[i] += ff->bezierCoefficientArray[i][r] * reducedStiffness[(size_t)mapping[r]][rank];
+                        r = j * 4 + j;
+                        if (mapping[r] >= 0)
+                        my_tinfo.stiffnessVector[i] -= ff->bezierCoefficientArray[i][r] * reducedStiffness[(size_t)mapping[r]][rank];
+                        r = k * 4 + k;
+                        if (mapping[r] >= 0)
+                        my_tinfo.stiffnessVector[i] -= ff->bezierCoefficientArray[i][r] * reducedStiffness[(size_t)mapping[r]][rank];
+                       
+                    }
+                }
+            }
+            if (ff->f_printLog.getValue()) {
+                helper::system::thread::ctime_t endUpdateMat = helper::system::thread::CTime::getTime();
+                ff->totalUpdateMat += endUpdateMat - startUpdateMat;
+            }
 		} else if (ff->integrationMethod==HighOrderTetrahedralDiffusionForceField<DataTypes>::NUMERICAL_INTEGRATION){
 			helper::system::thread::ctime_t startUpdateMat=helper::system::thread::CTime::getTime();
 			sofa::defaulttype::Vec<4,Real> bc;
@@ -290,37 +339,7 @@ void HighOrderTetrahedralDiffusionForceField<DataTypes>::FTCFTetrahedronHandler:
 				// compute the edge stiffness associated with that local tetrahedron
 				ff->computeTetrahedronStiffnessEdgeMatrix(point,edgeStiffness);
 				wvp.updateResult(degree,ff->numericalIntegrationStiffnessDataArray[i].arrayPointer,edgeStiffness);
-/*
-				if (degree==2) {
-					Vec45 res=(*(ff->numericalIntegrationStiffnessDataArray[i].arrayPointer.weightArrayQuadratic))*edgeStiffness;
-				
 
-					for (rank=0;rank<nbStiffnessEntries;rank++) {
-						my_tinfo.stiffnessVector[rank]+=  res[rank];
-					}
-				} 	else if (degree==3) {
-					Vec190 res=(*(ff->numericalIntegrationStiffnessDataArray[i].arrayPointer.weightArrayCubic))*edgeStiffness;
-					for (rank=0;rank<nbStiffnessEntries;rank++) {
-						my_tinfo.stiffnessVector[rank]+=  res[rank];
-					}
-				} 	else if (degree==4) {
-					Vec595 res=(*(ff->numericalIntegrationStiffnessDataArray[i].arrayPointer.weightArrayQuartic))*edgeStiffness;
-					for (rank=0;rank<nbStiffnessEntries;rank++) {
-						my_tinfo.stiffnessVector[rank]+=  res[rank];
-					}
-				} 	else if (degree==5) {
-					Vec1540 res=(*(ff->numericalIntegrationStiffnessDataArray[i].arrayPointer.weightArrayQuintic))*edgeStiffness;
-					for (rank=0;rank<nbStiffnessEntries;rank++) {
-						my_tinfo.stiffnessVector[rank]+=  res[rank];
-					}
-				} else {
-					// compute the stiffness matrix for all pairs of control points 
-					for (rank=0;rank<nbStiffnessEntries;rank++) {
-						const Vec6  & coeffVec=ff->numericalIntegrationStiffnessDataArray[i].weightVectorizedArray[rank];
-						my_tinfo.stiffnessVector[rank]+= dot(edgeStiffness,coeffVec);
-					}
-				}
-				*/
 			}
 			wvp.updateArray(degree,my_tinfo.stiffnessVector);
 			if (ff->f_printLog.getValue()) {
@@ -393,11 +412,13 @@ template <class DataTypes> void HighOrderTetrahedralDiffusionForceField<DataType
 		integrationMethod= NUMERICAL_INTEGRATION;
 	else if (d_integrationMethod.getValue() == "numerical2") 
 		integrationMethod= NUMERICAL_INTEGRATION_2;
+    else if (d_integrationMethod.getValue() == "bezierNumerical")
+        integrationMethod = BEZIER_NUMERICAL_INTEGRATION;
 	else if (d_integrationMethod.getValue() == "standard") 
 		integrationMethod= STANDARD_INTEGRATION;
     else
     {
-        serr << "cannot recognize method "<< d_integrationMethod.getValue() << ". Must be either \"analytical\" or \"numerical\"  or \"standard\"" << sendl;
+        serr << "cannot recognize method "<< d_integrationMethod.getValue() << ". Must be either \"analytical\" or \"numerical\" or \"bezierNumerical\" or \"standard\"" << sendl;
     }
 	if (d_anisotropy.getValue() == "isotropy")
         diffusionSymmetry= ISOTROPIC;
@@ -606,6 +627,114 @@ template <class DataTypes> void HighOrderTetrahedralDiffusionForceField<DataType
 				numericalIntegrationStiffnessDataArray.push_back(nimd);
 			}
 		}
+        if (integrationMethod == BEZIER_NUMERICAL_INTEGRATION)
+        {
+            /// first fill the first vector independent from the integration points
+            BezierTetrahedronSetGeometryAlgorithms<MechanicalTypes> *bezierTetraGeo = dynamic_cast<BezierTetrahedronSetGeometryAlgorithms<MechanicalTypes> *> (highOrderTetraGeo);
+            if (bezierTetraGeo == NULL) {
+                serr << "Could not find any BezierTetrahedronSetGeometryAlgorithms while using BEZIER_NUMERICAL_INTEGRATION" << sendl;
+                return;
+            }
+            bezierCoefficientArray.clear();
+            /// store the coefficient that are independent from the integration point
+            topology::TetrahedronIndexVector tbi1Copy, tbi2Copy;
+            size_t rank,r;
+            size_t i, j, k, l, m;
+            for (rank = 0, j = 0; j < tbiArray.size(); ++j) {
+                for (k = j + 1; k < tbiArray.size(); ++k, ++rank) {
+                    Vec16 weight;
+                    tbi1 = tbiArray[j];
+                    tbi2=  tbiArray[k];
+                    for (r=0,l = 0; l < 4; ++l) {
+                        for (m = 0; m < 4; ++m,++r) {
+                            if ((tbi1[l] * tbi2[m]) != 0) {
+                                tbi1Copy = tbi1;
+                                tbi1Copy[l] -= 1;
+                                weight[r] = 1.0f / (factorialTVI(tbi1Copy));
+                                tbi2Copy = tbi2;
+                                tbi2Copy[m] -= 1;
+                                weight[r] *= 1.0f / (factorialTVI(tbi2Copy));
+                            }
+                            else
+                                weight[r] = 0;
+      
+                        }
+                    }
+                    bezierCoefficientArray.push_back(weight);
+                }
+            }
+            /// store the mapping coefficient that are independent from the integration point
+            // now fills the vector for each integration point
+            sofa::helper::vector<topology::TetrahedronIndexVector> tbiArray2;
+            tbiArray2 = bezierTetraGeo->getTopologyContainer()->getTetrahedronIndexArrayOfGivenDegree(2 * degree - 2);
+
+            // first create a map to speed up the assignment of index from  TetrahedronIndexVector
+            std::map<topology::TetrahedronIndexVector, size_t> tivMap;
+            std::map<topology::TetrahedronIndexVector, size_t>::iterator itmap;
+            for ( j = 0; j < tbiArray2.size(); ++j) {
+                tivMap.insert(std::make_pair(tbiArray2[j],j));
+            }
+            /// now fills the bezierMappingArray
+            for (rank = 0, j = 0; j < tbiArray.size(); ++j) {
+                for (k = j + 1; k < tbiArray.size(); ++k, ++rank) {
+                    tbi1= tbiArray[j] + tbiArray[k];
+                    Vec16Int mapping;
+                    for (r=0,l = 0; l<4; ++l) {
+                        for (m = 0; m<4; ++m,++r) {
+                            
+                            if (((tbi1[l]*tbi1[m]) == 0) || (((l == m) && (tbi1[l] < 2)))) {
+                                mapping[r] = -1;
+                            }
+                            else {
+
+                                tbi2 = tbi1;
+                                tbi2[l] -= 1;
+                                tbi2[m] -= 1;
+                                itmap = tivMap.find(tbi2);
+                                assert(itmap != tivMap.end());
+                                mapping[r] = (*itmap).second;
+
+                            }
+                        }
+                    }
+                    bezierMappingArray.push_back(mapping);
+                }
+            }
+           
+
+         
+          
+
+            numericalIntegrationStiffnessDataArray.clear();
+            /// get value of integration points0
+            topology::NumericalIntegrationDescriptor<Real, 4> &nid = highOrderTetraGeo->getTetrahedronNumericalIntegrationDescriptor();
+            typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadraturePointArray qpa = nid.getQuadratureMethod((typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadratureMethod)numericalIntegrationMethod.getValue(),
+                numericalIntegrationOrder.getValue());
+          
+            sofa::defaulttype::Vec<4, Real> bc;
+            Real weight,fac;
+           
+            fac = (Real)lfactorial(degree - 1)*(Real)lfactorial(degree - 1) / (Real)lfactorial(2 * degree - 2);
+
+            // loop through the integration points
+            for (i = 0; i<qpa.size(); ++i) {
+                NumericalIntegrationStiffnessData nimd;
+                typename topology::NumericalIntegrationDescriptor<Real, 4>::QuadraturePoint qp = qpa[i];
+                // the barycentric coordinate
+                nimd.integrationPoint = qp.first;
+                // the weight of the integration point
+                weight = qp.second;
+                nimd.integrationWeight = qp.second;
+  
+                nimd.weightBezierArray.resize(tbiArray2.size());
+                for (j = 0; j < tbiArray2.size(); ++j) {
+                    nimd.weightBezierArray[j] = 6*degree*degree*fac*bezierTetraGeo->computeShapeFunctionOfGivenDegree(tbiArray2[j], qp.first, 2 * degree - 2);
+                    nimd.weightBezierArray[j] *= weight*factorialTVI(tbiArray2[j]);
+                }
+
+                numericalIntegrationStiffnessDataArray.push_back(nimd);
+            }
+        }
 		if (integrationMethod== STANDARD_INTEGRATION) 
 		{
 			numericalIntegrationStiffnessDataArray.clear();
