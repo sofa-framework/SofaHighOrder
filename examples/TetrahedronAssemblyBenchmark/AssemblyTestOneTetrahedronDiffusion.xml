@@ -14,7 +14,7 @@
 		<Node name="HighOrder">
 			<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
 		
-			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="2" />
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="5" />
 			<MechanicalObject name="bezierObj" showObject="0" showObjectScale="1" tags="BezierPosition" />	
 			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="1"  drawEdges="1" drawColorEdges="1 0 0"/>
 
@@ -31,7 +31,7 @@
 	
 					
 					<!-- ForceField -->
-					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" integrationMethod="standard" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" anisotropyParameters="2" integrationOrder="8"  diffusivity="3.0" anisotropy="isotropy" anisotropyDirection="0 0 1" printLog="1" tags="EPModel" />
+					<HighOrderTetrahedralDiffusionForceField template="Vec1d" name="Diffusion" integrationMethod="analytical" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="Tetrahedron Gauss" anisotropyParameters="2" integrationOrder="8"  diffusivity="3.0" anisotropy="isotropy" anisotropyDirection="0 0 1" printLog="1" tags="EPModel" />
 
 
 			</Node>

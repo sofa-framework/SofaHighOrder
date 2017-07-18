@@ -15,12 +15,12 @@
 			<StaticSolver  applyIncrementFactor="1"/>  -->
         	<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier" />	
 		
-			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="2" />
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTetrahedronDegree="3" />
 			<MechanicalObject  />	
 			<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" drawControlPoints="1"  drawEdges="1" drawColorEdges="1 0 0"/>
 			<FixedConstraint indices="0 1 2" />
-			<HighOrderMeshMatrixMass name="mass" massDensity="1" integrationMethod="bezierNumerical" lumping="0" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" integrationOrder="3" printLog="1"  />
-			<HighOrderTetrahedralCorotationalFEMForceField name="Elasticity" printLog="0" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="numerical2" numericalIntegrationMethod="3" integrationOrder="4" method="qr"  />
+			<HighOrderMeshMatrixMass name="mass" massDensity="1" integrationMethod="analytical" lumping="0" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="Tetrahedron Gauss" integrationOrder="6" printLog="1"  />
+			<HighOrderTetrahedralCorotationalFEMForceField name="Elasticity" printLog="0" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="bezierNumerical" numericalIntegrationMethod="Tetrahedron Gauss" integrationOrder="4" method="linear"  />
 			</Node>
     </Node>
 </Node>

@@ -14,11 +14,11 @@
 
         	<HighOrderTriangleSetTopologyContainer name="ContainerBezier" />	
 		
-			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTriangleDegree="5" />
+			<Mesh2HighOrderTopologicalMapping name="topoMapping" input="@../Container1" output="@ContainerBezier" bezierTriangleDegree="12" />
 			<MechanicalObject showObject="0" showObjectScale="1" template="Vec2d" />	 
 			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo" template="Vec2d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
-			<HighOrderMeshMatrixMass name="Mass"  template="Vec2d" lumping="0" massDensity="1" integrationMethod="bezierNumerical" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="3" integrationOrder="10" printLog="1" />
-			<HighOrderTriangularCorotationalFEMForceField name="Elasticity"  template="Vec2d" printLog="0" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="numerical" numericalIntegrationMethod="3" integrationOrder="5" method="linear"  />
+			<HighOrderMeshMatrixMass name="Mass"  template="Vec2d" lumping="0" massDensity="1" integrationMethod="analytical" forceAffineAssemblyForAffineElements="0" numericalIntegrationMethod="Triangle Gauss" integrationOrder="8" printLog="1" />
+			<HighOrderTriangularCorotationalFEMForceField name="Elasticity"  template="Vec2d" printLog="0" poissonRatio="0.45" forceAffineAssemblyForAffineElements="0" youngModulus="4"  integrationMethod="analytical" numericalIntegrationMethod="Triangle Conical Rules" integrationOrder="22" method="linear"  />
 			
 			</Node>
     </Node>
