@@ -58,7 +58,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::weightArrayPointe
 		weightArrayQuintic[1]=boost::make_shared<Mat1540x6>();
 	}
 }
-template <int L, class real = float> Mat<L, L, real> symmetrizeMatrix(Mat<L, L, real> &m)  {
+template <int L, class real = float> Mat<L, L, real> symmetrizeMatrix(Mat<L, L, real> m)  {
     size_t i,j;
     Mat<L, L, real> res=m;
     for (i = 0; i < L; ++i) {

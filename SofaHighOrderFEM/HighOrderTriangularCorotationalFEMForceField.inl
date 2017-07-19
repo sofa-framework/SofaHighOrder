@@ -58,7 +58,7 @@ void HighOrderTriangularCorotationalFEMForceField<DataTypes>::weightArrayPointer
 		weightArrayQuintic[1]=boost::make_shared<Mat210x3>();
 	}
 }
-template <int L, class real = float> Mat<L, L, real> symmetrizedMatrix(Mat<L, L, real> &m) {
+template <int L, class real = float> Mat<L, L, real> symmetrizedMatrix(Mat<L, L, real> m) {
     size_t i, j;
     Mat<L, L, real> res = m;
     for (i = 0; i < L; ++i) {
