@@ -74,7 +74,7 @@ TetrahedronSetGeometryAlgorithms<DataTypes>()
      // Gauss method
      typename NumericalIntegrationDescriptor<typename TetrahedronSetGeometryAlgorithms< DataTypes >::Real, 4>::QuadratureMethod m = "Tetrahedron Conical Rules";
      typename NumericalIntegrationDescriptor<typename TetrahedronSetGeometryAlgorithms< DataTypes >::Real, 4>::QuadratureMethodFunction qmf= &TetrahedronConicalRule<typename TetrahedronSetGeometryAlgorithms< DataTypes >::Real,4>;
-     tetrahedronNumericalIntegration.addQuadratureMethodFunction(m, qmf);
+     this->tetrahedronNumericalIntegration.addQuadratureMethodFunction(m, qmf);
 
      // test cubature : should be accurate up to 2n+1
      typename NumericalIntegrationDescriptor<Real, 4>::QuadraturePointArray qpa = tetrahedronNumericalIntegration.getQuadratureMethod("Tetrahedron Conical Rules", 3);
@@ -85,7 +85,7 @@ TetrahedronSetGeometryAlgorithms<DataTypes>()
      typename NumericalIntegrationDescriptor<Real, 4>::BarycentricCoordinatesType bc;
      Real weight;
 
-     Vec<3, unsigned short> randomPolynomial;
+     sofa::defaulttype::Vec<3, unsigned short> randomPolynomial;
      for (k = 0; k < 4; ++k) randomPolynomial[k] = 0;
      for (k = 0; k < degree; ++k) {
          randomPolynomial[helper::irand() % 4]++;
@@ -93,7 +93,7 @@ TetrahedronSetGeometryAlgorithms<DataTypes>()
      // compute the integral over the triangle through numerical integration
      Real integral = (Real)0;
      for (k = 0; k < qpa.size(); ++k) {
-         typename QuadraturePoint qp = qpa[k];
+          QuadraturePoint qp = qpa[k];
          // the barycentric coordinate
          bc = qp.first;
          // the weight of the integration point

@@ -67,7 +67,7 @@ TriangleSetGeometryAlgorithms<DataTypes>()
      // Gauss method
      typename NumericalIntegrationDescriptor<typename TriangleSetGeometryAlgorithms< DataTypes >::Real, 3>::QuadratureMethod m = "Triangle Conical Rules";
      typename NumericalIntegrationDescriptor<typename TriangleSetGeometryAlgorithms< DataTypes >::Real, 3>::QuadratureMethodFunction qmf = &TriangleConicalRule<typename TriangleSetGeometryAlgorithms< DataTypes >::Real,3>;
-     triangleNumericalIntegration.addQuadratureMethodFunction(m, qmf);
+      this->triangleNumericalIntegration.addQuadratureMethodFunction(m, qmf);
 
      //size_t i, j;
      //for (i = 1; i < 5; ++i) {
@@ -88,7 +88,7 @@ TriangleSetGeometryAlgorithms<DataTypes>()
      typename NumericalIntegrationDescriptor<Real, 3>::BarycentricCoordinatesType bc;
      Real weight;
 
-     Vec<3, unsigned short> randomPolynomial;
+     sofa::defaulttype::Vec<3, unsigned short> randomPolynomial;
      for (k = 0; k < 3; ++k) randomPolynomial[k] = 0;
      for (k = 0; k < degree; ++k) {
          randomPolynomial[helper::irand() % 3]++;
@@ -96,7 +96,7 @@ TriangleSetGeometryAlgorithms<DataTypes>()
      // compute the integral over the triangle through numerical integration
      Real integral = (Real)0;
      for (k = 0; k < qpa.size(); ++k) {
-         typename QuadraturePoint qp = qpa[k];
+          QuadraturePoint qp = qpa[k];
          // the barycentric coordinate
          bc = qp.first;
          // the weight of the integration point
