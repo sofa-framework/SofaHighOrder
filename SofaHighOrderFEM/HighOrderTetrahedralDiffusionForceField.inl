@@ -14,7 +14,7 @@
 
 #include <sofa/helper/decompose.h>
 #include <boost/make_shared.hpp>
-#include "GenericMatrixManipulator.inl"
+
 
 namespace sofa
 {
