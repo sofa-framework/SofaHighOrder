@@ -77,7 +77,7 @@ TetrahedronSetGeometryAlgorithms<DataTypes>()
      this->tetrahedronNumericalIntegration.addQuadratureMethodFunction(m, qmf);
 
      // test cubature : should be accurate up to 2n+1
-     typename NumericalIntegrationDescriptor<Real, 4>::QuadraturePointArray qpa = tetrahedronNumericalIntegration.getQuadratureMethod("Tetrahedron Conical Rules", 3);
+     typename NumericalIntegrationDescriptor<Real, 4>::QuadraturePointArray qpa = this->tetrahedronNumericalIntegration.getQuadratureMethod("Tetrahedron Conical Rules", 3);
      /// set the random polynomial defined as u^i*v^j*w^k where [i,j,k] is a random vector given by randomPolynomial
      /// such that i+j+k+l= degree
      degree = 3;

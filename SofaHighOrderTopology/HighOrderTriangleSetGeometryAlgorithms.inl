@@ -80,7 +80,7 @@ TriangleSetGeometryAlgorithms<DataTypes>()
      //    std::cerr << " end legendre ordre " << i << " total="<< tot << std::endl << std::endl;
      //}
      // test cubature : should be accurate up to 2n+1
-     typename NumericalIntegrationDescriptor<Real, 3>::QuadraturePointArray qpa=triangleNumericalIntegration.getQuadratureMethod("Triangle Conical Rules", 3);
+     typename NumericalIntegrationDescriptor<Real, 3>::QuadraturePointArray qpa=this->triangleNumericalIntegration.getQuadratureMethod("Triangle Conical Rules", 3);
      /// set the random polynomial defined as u^i*v^j*w^k where [i,j,k] is a random vector given by randomPolynomial
      /// such that i+j+k+l= degree
      degree = 3;
