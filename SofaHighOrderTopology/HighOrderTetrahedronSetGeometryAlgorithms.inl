@@ -405,7 +405,7 @@ void HighOrderTetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visu
 				vparams->drawTool()->setLightingEnabled(true); //Enable lightning
 				vparams->drawTool()->drawSpheres(pointsVertices, radiusVertices,  defaulttype::Vec<4,float>(1.0f,0,0,1.0f));
 				vparams->drawTool()->setLightingEnabled(false); //Disable lightning
-				vparams->drawTool()->disableLighting();
+				
 
 				vparams->drawTool()->enableDepthTest();
 				vparams->drawTool()->enablePolygonOffset(-1.0, 100.0);
