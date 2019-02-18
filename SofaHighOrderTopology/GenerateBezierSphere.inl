@@ -161,7 +161,7 @@ void GenerateBezierSphere<DataTypes>::reinit()
 }
 
 template <class DataTypes>
-void GenerateBezierSphere<DataTypes>::update()
+void GenerateBezierSphere<DataTypes>::doUpdate()
 {
     const Real radius = f_radius.getValue();
 	const size_t frequency = f_tessellationDegree.getValue();
