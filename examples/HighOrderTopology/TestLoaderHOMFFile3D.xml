@@ -4,14 +4,17 @@
 
 	<Node name="MecaNode" gravity="0 0 0">
         <MeshHOMFLoader name="HOMFLoader" filename="mesh/SphereTetraIcosahedronDeg4.hom" />
+        <!-- <MeshHOMFLoader name="HOMFLoader" filename="mesh/5kv_lamba100.hom" swapEdges="true" /> -->
+
+		
 		<HighOrderTetrahedronSetTopologyContainer name="ContainerBezier"  position="@HOMFLoader.position" tetrahedra="@HOMFLoader.tetrahedra" inputHighOrderEdges="@HOMFLoader.edges" inputHighOrderTriangles="@HOMFLoader.triangles"  inputHighOrderEdgePositions="@HOMFLoader.highOrderEdgePositions"  inputHighOrderTrianglePositions="@HOMFLoader.highOrderTrianglePositions"  weights="@HOMFLoader.weights" inputHighOrderTetrahedronPositions="@HOMFLoader.highOrderTetrahedronPositions"  degree="@HOMFLoader.degree" />	
 		<MechanicalObject showObject="0" name="BezierMeca" template="Vec3d" />	
-		<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" template="Vec3d" drawControlPoints="true"  drawEdges="true" drawColorEdges="1 0 0"/>
+		<BezierTetrahedronSetGeometryAlgorithms name="GeomAlgo" template="Vec3d" drawControlPoints="false"  drawEdges="false" drawColorEdges="1 0 0"/>
 		<Node name="BezierTriangleTopology" >
 			<TriangleSetTopologyModifier />
 			<HighOrderTriangleSetTopologyContainer name="ContainerTriangleBezier1"/>    
 			<HighOrderTetra2HighOrderTriangleTopologicalMapping input="@../ContainerBezier" output="@ContainerTriangleBezier1" useSurfaceExtrapolation="1"  />
-			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo1" drawControlPointsEdges="true" drawControlPoints="true" />   
+			<BezierTriangleSetGeometryAlgorithms name="GeomAlgo1" drawControlPointsEdges="false" drawSmoothEdges="true" drawControlPoints="true" />   
 				<Node name="TriangleTopology">
 					<TriangleSetTopologyContainer name="triangulation1" />
 					<TriangleSetGeometryAlgorithms  />
