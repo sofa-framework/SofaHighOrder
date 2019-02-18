@@ -85,7 +85,7 @@ TetrahedronSetGeometryAlgorithms<DataTypes>()
      typename NumericalIntegrationDescriptor<Real, 4>::BarycentricCoordinatesType bc;
      Real weight;
 
-     sofa::defaulttype::Vec<3, unsigned short> randomPolynomial;
+     sofa::defaulttype::Vec<4, unsigned short> randomPolynomial;
      for (k = 0; k < 4; ++k) randomPolynomial[k] = 0;
      for (k = 0; k < degree; ++k) {
          randomPolynomial[helper::irand() % 4]++;
