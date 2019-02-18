@@ -49,7 +49,7 @@ public:
 
     void reinit();
 
-    void update();
+    virtual void doUpdate();
 
     virtual std::string getTemplateName() const
     {

@@ -72,7 +72,7 @@ void GenerateBezierCylinder<DataTypes>::reinit()
 }
 
 template <class DataTypes>
-void GenerateBezierCylinder<DataTypes>::update()
+void GenerateBezierCylinder<DataTypes>::doUpdate()
 {
     const Real radius = f_radius.getValue();
 	const Real height = f_height.getValue();
