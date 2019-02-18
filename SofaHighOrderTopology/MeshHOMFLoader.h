@@ -35,6 +35,9 @@ public:
     // the degree of the spline
     Data< size_t  > d_degree;
 
+	// the degree of the spline
+	Data< bool  > d_swapEdges;
+
 protected:
 
     MeshHOMFLoader();
