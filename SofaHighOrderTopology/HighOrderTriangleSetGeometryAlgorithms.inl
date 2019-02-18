@@ -396,15 +396,10 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 				vparams->drawTool()->drawSpheres(pointsVertices, radiusVertices,  defaulttype::Vec<4,float>(1.0f,0,0,1.0f));
 				vparams->drawTool()->setLightingEnabled(false); //Disable lightning
 
-				#ifndef SOFA_NO_OPENGL
-				glDisable(GL_LIGHTING);
-				
-				glColor3f(0.0f, 1.0f, 0.0f);
-				glLineWidth(3.0);
-				 glEnable(GL_DEPTH_TEST);
-				glEnable(GL_POLYGON_OFFSET_LINE);
-				glPolygonOffset(-1.0,100.0);
-				
+				vparams->drawTool()->enableDepthTest();
+				vparams->drawTool()->enablePolygonOffset(-1.0, 100.0);
+				float size = 3.0;
+				Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
 				
 				// how many points is used to discretize the edge
 				const size_t edgeTesselation=9;
@@ -417,34 +412,36 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 					for (size_t j = 0; j<3; j++) {
 						Vec3 baryCoord;
 						baryCoord[j]=0;
-						glBegin(GL_LINE_STRIP);
+						std::vector<sofa::defaulttype::Vector3> points;
+						
 						for (size_t k=0;k<=edgeTesselation;++k) {
 							baryCoord[(j+1)%3]=(Real)k/(Real)edgeTesselation;
 							baryCoord[(j+2)%3]=(Real)(edgeTesselation-k)/(Real)edgeTesselation;
 							p=DataTypes::getCPos(computeNodalValue(i,baryCoord));
-							glVertex3f(p[0],p[1],p[2]);
+							points.push_back(p);
 						}
-						glEnd();
+						vparams->drawTool()->drawLineStrip(points, size, color);
 					}
 				}
-				glDisable(GL_POLYGON_OFFSET_LINE);
+				vparams->drawTool()->disablePolygonOffset();
 				
 			}
-			#endif
+		
 		}
 		
 		// Draw edges linking Bezier Triangle control points with a color code
 		if (drawControlPointsEdges.getValue())
 		{
-			#ifndef SOFA_NO_OPENGL
+			
 			const sofa::helper::vector<Triangle> &trianArray = this->m_topology->getTriangles();
 
 			if (!trianArray.empty())
 			{
-				glDisable(GL_LIGHTING);
-                const sofa::defaulttype::Vec4f& color =  this->_drawColor.getValue();
-				glColor3f(color[0], color[1], color[2]);
-				glBegin(GL_LINES);
+				std::vector<sofa::defaulttype::Vector3> points;
+				std::vector<sofa::defaulttype::Vec4f> colors;
+				sofa::defaulttype::Vector4 color;
+				vparams->drawTool()->disableLighting();
+
 				const VecCoord& coords =(this->object->read(core::ConstVecCoordId::position())->getValue());
 				VecPointID indexArray;
 				Vec3 baryCoord;
@@ -464,17 +461,18 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 					for (; ite!=bezierTriangleEdgeSet.end(); ite++)
 					{
 						if ((*ite).second) {
-							glColor3f(0.0f, 1.0f, 0.0f);
+							colors.push_back(sofa::defaulttype::Vec4f(0.0f, 1.0f, 0.0f, 0.0f));  
 						} else {
-							glColor3f(0.0f, 0.0f, 1.0f );
+							colors.push_back(sofa::defaulttype::Vec4f(0.0f, 0.0f, 1.0f, 0.0f)); 
 						}
-						glVertex3f(trianCoord[(*ite).first[0]][0], trianCoord[(*ite).first[0]][1], trianCoord[(*ite).first[0]][2]);
-						glVertex3f(trianCoord[(*ite).first[1]][0], trianCoord[(*ite).first[1]][1], trianCoord[(*ite).first[1]][2]);
+						points.push_back(sofa::defaulttype::Vector3(trianCoord[(*ite).first[0]][0], trianCoord[(*ite).first[0]][1], trianCoord[(*ite).first[0]][2]));
+						points.push_back(sofa::defaulttype::Vector3(trianCoord[(*ite).first[1]][0], trianCoord[(*ite).first[1]][1], trianCoord[(*ite).first[1]][2]));
+//						glVertex3f(trianCoord[(*ite).first[0]][0], trianCoord[(*ite).first[0]][1], trianCoord[(*ite).first[0]][2]);
+//						glVertex3f(trianCoord[(*ite).first[1]][0], trianCoord[(*ite).first[1]][1], trianCoord[(*ite).first[1]][2]);
 					}
 				}
-				glEnd();
+				vparams->drawTool()->drawLines(points, 1.0f, colors);
 			}
-			#endif
 		}
 	}
 	
