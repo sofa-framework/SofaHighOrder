@@ -405,16 +405,13 @@ void HighOrderTetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visu
 				vparams->drawTool()->setLightingEnabled(true); //Enable lightning
 				vparams->drawTool()->drawSpheres(pointsVertices, radiusVertices,  defaulttype::Vec<4,float>(1.0f,0,0,1.0f));
 				vparams->drawTool()->setLightingEnabled(false); //Disable lightning
-				
-				#ifndef SOFA_NO_OPENGL
-				glDisable(GL_LIGHTING);
-				
-				glColor3f(0.0f, 1.0f, 0.0f);
-				glLineWidth(3.0);
-				 glEnable(GL_DEPTH_TEST);
-				glEnable(GL_POLYGON_OFFSET_LINE);
-				glPolygonOffset(-1.0,100.0);
-				
+				vparams->drawTool()->disableLighting();
+
+				vparams->drawTool()->enableDepthTest();
+				vparams->drawTool()->enablePolygonOffset(-1.0, 100.0);
+				float size = 3.0;
+				Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
+
 				const unsigned int edgesInTetrahedronArray[6][2] = {{0,1}, {0,2}, {0,3}, {1,2}, {1,3}, {2,3}};
 				const unsigned int oppositeEdgesInTetrahedronArray[6][2] = {{2,3}, {1,3}, {1,2}, {0,3}, {0,2}, {0,1}};
 				// how many points is used to discretize the edge
@@ -430,32 +427,35 @@ void HighOrderTetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visu
 						Vec4 baryCoord;
 						baryCoord[oppositeEdgesInTetrahedronArray[j][0]]=0;
 						baryCoord[oppositeEdgesInTetrahedronArray[j][1]]=0;
-						glBegin(GL_LINE_STRIP);
+						std::vector<sofa::defaulttype::Vector3> points;
+						
 						for (size_t k=0;k<=edgeTesselation;++k) {
 							baryCoord[edgesInTetrahedronArray[j][0]]=(Real)k/(Real)edgeTesselation;
 							baryCoord[edgesInTetrahedronArray[j][1]]=(Real)(edgeTesselation-k)/(Real)edgeTesselation;
 							p=DataTypes::getCPos(computeNodalValue(i,baryCoord));
-							glVertex3f(p[0],p[1],p[2]);
+							points.push_back(p);
 						}
-						glEnd();
+						vparams->drawTool()->drawLineStrip(points, size, color);
 					}
 				}
-				glDisable(GL_POLYGON_OFFSET_LINE);
+				vparams->drawTool()->disablePolygonOffset();
 				
 			}
-			#endif
+			
 		}
 
 		if (drawControlPointsEdges.getValue())
 		{
 			const sofa::helper::vector<Tetrahedron> &tetraArray = this->m_topology->getTetrahedra();
-				#ifndef SOFA_NO_OPENGL
+				
 			if (!tetraArray.empty())
 			{
-				glDisable(GL_LIGHTING);
-				const sofa::defaulttype::Vec4f& color =  this->_drawColor.getValue();
-				glColor3f(color[0], color[1], color[2]);
-				glBegin(GL_LINES);
+				std::vector<sofa::defaulttype::Vector3> points;
+				std::vector<sofa::defaulttype::Vec4f> colors;
+				sofa::defaulttype::Vector4 color;
+				vparams->drawTool()->disableLighting();
+			
+				
 				const VecCoord& coords =(this->object->read(core::ConstVecCoordId::position())->getValue());
 				
 				Vec4 baryCoord;
@@ -477,21 +477,19 @@ void HighOrderTetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visu
 					for (; ite!=bezierTetrahedronEdgeSet.end(); ite++)
 					{
 						if ((*ite).second==2) {
-							glColor3f(0.0f, 1.0f, 0.0f);
+							colors.push_back(sofa::defaulttype::Vec4f(0.0f, 1.0f, 0.0f, 0.0f));
 						} else 	if ((*ite).second==1)  {
-							glColor3f(0.0f, 0.0f, 1.0f );
+							colors.push_back(sofa::defaulttype::Vec4f(0.0f, 0.0f, 1.0f, 0.0f));
 						} else {
-							glColor3f(1.0f, 0.0f, 1.0f );
+							colors.push_back(sofa::defaulttype::Vec4f(1.0f, 0.0f, 1.0f, 0.0f));
 						}
-						glVertex3f(tetraCoord[(*ite).first[0]][0], tetraCoord[(*ite).first[0]][1], tetraCoord[(*ite).first[0]][2]);
-						glVertex3f(tetraCoord[(*ite).first[1]][0], tetraCoord[(*ite).first[1]][1], tetraCoord[(*ite).first[1]][2]);
-
-						
+						points.push_back(sofa::defaulttype::Vector3(tetraCoord[(*ite).first[0]][0], tetraCoord[(*ite).first[0]][1], tetraCoord[(*ite).first[0]][2]));
+						points.push_back(sofa::defaulttype::Vector3(tetraCoord[(*ite).first[1]][0], tetraCoord[(*ite).first[1]][1], tetraCoord[(*ite).first[1]][2]));	
 					}
 				}
-				glEnd();
+				vparams->drawTool()->drawLines(points, 1.0f, colors);
 			}
-			#endif
+			
 		}
 	}
 
