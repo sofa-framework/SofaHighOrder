@@ -27,10 +27,13 @@ MeshHOMFLoader::MeshHOMFLoader() : MeshLoader()
 , d_positions2D(initData(&d_positions2D, "position2D", "Array of 2d positions of control points"))
 , d_weights(initData(&d_weights, "weights", "Array of weights for rational splines"))
 , d_degree(initData(&d_degree, "degree", "degree of spline mesh"))
+, d_swapEdges(initData(&d_swapEdges, (bool)false,"swapEdges", "swap order of edges"))
+
 {
     d_positions2D.setPersistent(false);
     d_weights.setPersistent(false);
     d_degree.setPersistent(false);
+
 }
 
 bool MeshHOMFLoader::load()
@@ -210,7 +213,11 @@ bool MeshHOMFLoader::readHOMF(std::ifstream &file, const unsigned int homfFormat
 
         for (i = 0; i < numberEdgeControlPoints; ++i) {
             file >> i0 >> i1 >> i2 >> i3;
-            my_highOrderEdgePositions.push_back(HighOrderEdgePosition(i0, i1, i2, i3));
+			if (d_swapEdges.getValue())
+				my_highOrderEdgePositions.push_back(HighOrderEdgePosition(i0, i1, i3, i2));
+			else
+	           my_highOrderEdgePositions.push_back(HighOrderEdgePosition(i0, i1, i2, i3));
+	
         }
         d_highOrderEdgePositions.endEdit();
     }
