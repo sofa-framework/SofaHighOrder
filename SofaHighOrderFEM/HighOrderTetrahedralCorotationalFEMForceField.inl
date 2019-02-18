@@ -1198,7 +1198,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 			// the linear stiffness matrix using shape vectors and Lame coefficients
 			Mat3x3 tmp=dyad(shapeVector[l],shapeVector[k]);
 			for(i=0;i<anisotropyScalarArray.size();++i) {
-				edgeStiffness[j]+=anisotropyScalarArray[i]*anisotropyMatrixArray[j]*tmp*anisotropyMatrixArray[j];
+				edgeStiffness[j]+=anisotropyScalarArray[i]*anisotropyMatrixArray[i]*tmp*anisotropyMatrixArray[i];
 			}
 		}
 	}
