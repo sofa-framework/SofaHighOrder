@@ -2,6 +2,7 @@
 #include "MeshHOMFLoader.h"
 #include <sofa/core/visual/VisualParams.h>
 #include <iostream>
+#include <fstream>
 
 namespace sofa
 {
