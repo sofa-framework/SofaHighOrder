@@ -24,24 +24,14 @@ using namespace sofa::defaulttype;
 
 // Register in the Factory
 int HighOrderTriangularDiffusionForceFieldClass = core::RegisterObject("Diffusion on High Order Triangular Mesh")
-#ifndef SOFA_FLOAT
-        .add< HighOrderTriangularDiffusionForceField<Vec2dTypes> >()
-        .add< HighOrderTriangularDiffusionForceField<Vec1dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< HighOrderTriangularDiffusionForceField<Vec2fTypes> >()
-        .add< HighOrderTriangularDiffusionForceField<Vec1fTypes> >()
-#endif
+        .add< HighOrderTriangularDiffusionForceField<Vec2Types> >()
+        .add< HighOrderTriangularDiffusionForceField<Vec1Types> >()
         ;
 
-#ifndef SOFA_FLOAT
-template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec2dTypes>;
-template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec1dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-template class SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec2fTypes>;
-template class SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec1fTypes>;
-#endif
+
+template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec2Types>;
+template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularDiffusionForceField<Vec1Types>;
+
 
 } // namespace forcefield
 

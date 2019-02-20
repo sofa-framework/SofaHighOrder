@@ -23,20 +23,11 @@ using namespace sofa::defaulttype;
 
 // Register in the Factory
 int HighOrderTriangularCorotationalFEMForceFieldClass = core::RegisterObject("Corotational High Order Triangular Mesh")
-#ifndef SOFA_FLOAT
-        .add< HighOrderTriangularCorotationalFEMForceField<Vec2dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< HighOrderTriangularCorotationalFEMForceField<Vec2fTypes> >()
-#endif
+        .add< HighOrderTriangularCorotationalFEMForceField<Vec2Types> >()
         ;
 
-#ifndef SOFA_FLOAT
-template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularCorotationalFEMForceField<Vec2dTypes>;
-#endif
-#ifndef SOFA_DOUBLE
-template class SOFA_HIGHORDER_FEM_API HighOrderTriangularCorotationalFEMForceField<Vec2fTypes>;
-#endif
+template class  SOFA_HIGHORDER_FEM_API HighOrderTriangularCorotationalFEMForceField<Vec2Types>;
+
 
 } // namespace forcefield
 
