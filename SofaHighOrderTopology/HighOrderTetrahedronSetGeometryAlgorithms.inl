@@ -410,7 +410,7 @@ void HighOrderTetrahedronSetGeometryAlgorithms<DataTypes>::draw(const core::visu
 				vparams->drawTool()->enableDepthTest();
 				vparams->drawTool()->enablePolygonOffset(-1.0, 100.0);
 				float size = 3.0;
-				Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
+				sofa::defaulttype::Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
 
 				const unsigned int edgesInTetrahedronArray[6][2] = {{0,1}, {0,2}, {0,3}, {1,2}, {1,3}, {2,3}};
 				const unsigned int oppositeEdgesInTetrahedronArray[6][2] = {{2,3}, {1,3}, {1,2}, {0,3}, {0,2}, {0,1}};
