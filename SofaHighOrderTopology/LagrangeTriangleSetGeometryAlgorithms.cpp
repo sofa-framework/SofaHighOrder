@@ -18,35 +18,16 @@ using namespace sofa::defaulttype;
 
 SOFA_DECL_CLASS(LagrangeTriangleSetGeometryAlgorithms)
 int LagrangeTriangleSetGeometryAlgorithmsClass = core::RegisterObject("Lagrange Triangle set geometry algorithms")
-#ifdef SOFA_FLOAT
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec3fTypes> >(true) // default template
-#else
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec3dTypes> >(true) // default template
-#ifndef SOFA_DOUBLE
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec3fTypes> >() // default template
-#endif
-#endif
-#ifndef SOFA_FLOAT
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec2dTypes> >()
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec1dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec2fTypes> >()
-        .add< LagrangeTriangleSetGeometryAlgorithms<Vec1fTypes> >()
-#endif
+        .add< LagrangeTriangleSetGeometryAlgorithms<Vec3Types> >(true) // default template
+        .add< LagrangeTriangleSetGeometryAlgorithms<Vec2Types> >()
+        .add< LagrangeTriangleSetGeometryAlgorithms<Vec1Types> >()
         ;
 
-#ifndef SOFA_FLOAT
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec3dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec2dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec1dTypes>;
-#endif
 
-#ifndef SOFA_DOUBLE
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec3fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec2fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec1fTypes>;
-#endif
+template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec3Types>;
+template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec2Types>;
+template class SOFA_HIGHORDER_TOPOLOGY_API LagrangeTriangleSetGeometryAlgorithms<Vec1Types>;
+
 
 } // namespace topology
 

@@ -15,35 +15,17 @@ namespace topology
 using namespace sofa::defaulttype;
 SOFA_DECL_CLASS(BezierTetrahedronSetGeometryAlgorithms)
 int BezierTetrahedronSetGeometryAlgorithmsClass = core::RegisterObject("Bezier Tetrahedron set geometry algorithms")
-#ifdef SOFA_FLOAT
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec3fTypes> >(true) // default template
-#else
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec3dTypes> >(true) // default template
-#ifndef SOFA_DOUBLE
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec3fTypes> >() // default template
-#endif
-#endif
-#ifndef SOFA_FLOAT
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec2dTypes> >()
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec1dTypes> >()
-#endif
-#ifndef SOFA_DOUBLE
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec2fTypes> >()
-        .add< BezierTetrahedronSetGeometryAlgorithms<Vec1fTypes> >()
-#endif
-        ;
+        .add< BezierTetrahedronSetGeometryAlgorithms<Vec3Types> >(true) // default template
+        .add< BezierTetrahedronSetGeometryAlgorithms<Vec2Types> >()
+        .add< BezierTetrahedronSetGeometryAlgorithms<Vec1Types> >();
 
-#ifndef SOFA_FLOAT
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec3dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec2dTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec1dTypes>;
-#endif
 
-#ifndef SOFA_DOUBLE
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec3fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec2fTypes>;
-template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec1fTypes>;
-#endif
+template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec3Types>;
+template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec2Types>;
+template class SOFA_HIGHORDER_TOPOLOGY_API BezierTetrahedronSetGeometryAlgorithms<Vec1Types>;
+
+
+
 
 } // namespace topology
 
