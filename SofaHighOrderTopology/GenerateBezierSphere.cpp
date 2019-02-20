@@ -16,21 +16,10 @@ using namespace sofa::defaulttype;
 SOFA_DECL_CLASS(GenerateBezierSphere)
 
 int GenerateBezierSphereClass = core::RegisterObject("Generate a sphereical (Bezier) Tetrahedral and Triangular Mesh")
-#ifndef SOFA_FLOAT
-        .add< GenerateBezierSphere<Vec3dTypes> >()
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-        .add< GenerateBezierSphere<Vec3fTypes> >()
-#endif //SOFA_DOUBLE
+        .add< GenerateBezierSphere<Vec3Types> >()
         ;
 
-
-#ifndef SOFA_FLOAT
-template class SOFA_HIGHORDER_TOPOLOGY_API GenerateBezierSphere<Vec3dTypes>;
-#endif //SOFA_FLOAT
-#ifndef SOFA_DOUBLE
-template class SOFA_HIGHORDER_TOPOLOGY_API GenerateBezierSphere<Vec3fTypes>;
-#endif //SOFA_DOUBLE
+template class SOFA_HIGHORDER_TOPOLOGY_API GenerateBezierSphere<Vec3Types>;
 
 
 } // namespace constraint
