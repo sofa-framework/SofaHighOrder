@@ -399,7 +399,7 @@ void HighOrderTriangleSetGeometryAlgorithms<DataTypes>::draw(const core::visual:
 				vparams->drawTool()->enableDepthTest();
 				vparams->drawTool()->enablePolygonOffset(-1.0, 100.0);
 				float size = 3.0;
-				Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
+				sofa::defaulttype::Vec<4, float> color(0.0f, 1.0f, 0.0f, 0.0f);
 				
 				// how many points is used to discretize the edge
 				const size_t edgeTesselation=9;
