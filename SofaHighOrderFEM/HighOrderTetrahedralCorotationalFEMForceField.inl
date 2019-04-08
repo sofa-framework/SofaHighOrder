@@ -514,7 +514,9 @@ HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::HighOrderTetrahedralCo
         , d_poissonRatio(initData(&d_poissonRatio, (Real)0.3, "poissonRatio", "Poisson ratio in Hooke's law"))
         , d_youngModulus(initData(&d_youngModulus, (Real)1000., "youngModulus", "Young modulus in Hooke's law"))
         , d_anisotropy(initData(&d_anisotropy, std::string("isotropic"), "elasticitySymmetry", "the type of anisotropy for the elasticity tensor :\"isotropic\"  or \"transverseIsotropic\" or \"orthotropic\" or \"cubic\" "))
-        , d_anisotropyParameter(initData(&d_anisotropyParameter, "anisotropyParameters", "the elastic parameters for anisotropic materials "))
+        , d_anisotropyParameter(initData(&d_anisotropyParameter, "anisotropyParameters", "the elastic parameters for anisotropic materials.\n"
+                                                                                         "- for cubic symmetry       --> anisotropyParameters == [anisotropyRatio]\n"
+                                                                                         "- for transverse symemetry --> anisotropyParameters == [youngModulusLongitudinal, poissonRatioTransverseLongitudinal, shearModulusTransverse]"))
         , d_anisotropyDirection(initData(&d_anisotropyDirection, "anisotropyDirections", "the directions of anisotropy"))
         , numericalIntegrationOrder(initData(&numericalIntegrationOrder, (size_t)2, "integrationOrder", "The order of integration for numerical integration"))
         , d_integrationMethod(initData(&d_integrationMethod, std::string("analytical"), "integrationMethod", "\"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen,  \"standard\" if standard integration is chosen"))
@@ -566,8 +568,11 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
         elasticitySymmetry= CUBIC;
     else if (d_anisotropy.getValue() == "transverseIsotropic") 
         elasticitySymmetry= TRANSVERSE_ISOTROPIC;
-    else if (d_anisotropy.getValue() == "orthotropic") 
-        elasticitySymmetry= ORTHOTROPIC;
+    else if (d_anisotropy.getValue() == "orthotropic")
+    {
+        msg_warning() << "orthotropic elasticitySymmetry is not yet implemented";
+        //elasticitySymmetry= ORTHOTROPIC;
+    }
 	else
     {
         serr << "cannot recognize symmetry "<< d_anisotropy.getValue() << ". Must be either \"isotropic\" or \"cubic\"  or \"transverseIsotropic\" or \"orthotropic\"" << sendl;
@@ -632,8 +637,11 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
 	sofa::helper::vector<topology::TetrahedronIndexVector> tbiArray;
 	tbiArray=highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArray();
 
-	if (degree==1) 
-		integrationMethod= AFFINE_ELEMENT_INTEGRATION;
+    if (degree==1)
+    {
+        msg_warning() << "The order of your TopologyContainer is 1. With this order we force the integrationMethod to analytical";
+        integrationMethod= AFFINE_ELEMENT_INTEGRATION;
+    }
 
 	computeElasticityTensor();
 	if (degree>1) {
@@ -1025,7 +1033,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeElasticity
         // elasticity tensor in isotropic case
         // lambda = E*v/(1-2*v)*(1+v)
         // mu = E/(2*(1+v))
-        // with v == poissonRatio & E youngModulus
+        // with v == poissonRatio & E == youngModulus
         Real lambda=getLambda();
         Real mu=getMu();
         //
@@ -1415,7 +1423,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 					edgeStiffness[j][m][n]=lambda*shapeVector[k][n]*shapeVector[l][m]+
 						mu*shapeVector[l][n]*shapeVector[k][m];
 
-					if (m==n)
+                    if (m==n)
 					{
 						edgeStiffness[j][m][m]+=(Real)val;
 					}
