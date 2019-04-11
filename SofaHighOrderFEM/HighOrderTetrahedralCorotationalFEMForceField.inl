@@ -58,7 +58,10 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::weightArrayPointe
 		weightArrayQuintic[1]=boost::make_shared<Mat1540x6>();
 	}
 }
-template <int L, class real = float> Mat<L, L, real> symmetrizeMatrix(Mat<L, L, real> m)  {
+
+
+template <int L, class real = float>
+Mat<L, L, real> symmetrizeMatrix(Mat<L, L, real> m)  {
     size_t i,j;
     Mat<L, L, real> res=m;
     for (i = 0; i < L; ++i) {
@@ -70,6 +73,8 @@ template <int L, class real = float> Mat<L, L, real> symmetrizeMatrix(Mat<L, L, 
     }
     return res;
 }
+
+
 template< class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHandler::applyCreateFunction(unsigned int tetrahedronIndex,
     TetrahedronRestInformation &my_tinfo,
@@ -293,7 +298,6 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHa
 
             }
             else if (ff->integrationMethod == HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::NUMERICAL_INTEGRATION) {
-
                 sofa::defaulttype::Vec<4, Real> bc;
 
                 size_t p, q;
@@ -407,7 +411,6 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHa
                 }
             }
             else if (ff->integrationMethod == HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::NUMERICAL_INTEGRATION_2) {
-
                 sofa::defaulttype::Vec<4, Real> bc;
                 Mat3x3 edgeStiffness3x3[6];
                 size_t p, q;
@@ -501,7 +504,9 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHa
 
     }
 
-    template <class DataTypes> HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::HighOrderTetrahedralCorotationalFEMForceField()
+
+template <class DataTypes>
+HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::HighOrderTetrahedralCorotationalFEMForceField()
         : tetrahedronInfo(initData(&tetrahedronInfo, "tetrahedronInfo", "Internal tetrahedron data"))
         , _initialPoints(0)
         , updateMatrix(true)
@@ -509,7 +514,9 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHa
         , d_poissonRatio(initData(&d_poissonRatio, (Real)0.3, "poissonRatio", "Poisson ratio in Hooke's law"))
         , d_youngModulus(initData(&d_youngModulus, (Real)1000., "youngModulus", "Young modulus in Hooke's law"))
         , d_anisotropy(initData(&d_anisotropy, std::string("isotropic"), "elasticitySymmetry", "the type of anisotropy for the elasticity tensor :\"isotropic\"  or \"transverseIsotropic\" or \"orthotropic\" or \"cubic\" "))
-        , d_anisotropyParameter(initData(&d_anisotropyParameter, "anisotropyParameters", "the elastic parameters for anisotropic materials "))
+        , d_anisotropyParameter(initData(&d_anisotropyParameter, "anisotropyParameters", "the elastic parameters for anisotropic materials.\n"
+                                                                                         "- for cubic symmetry       --> anisotropyParameters == [anisotropyRatio]\n"
+                                                                                         "- for transverse symemetry --> anisotropyParameters == [youngModulusLongitudinal, poissonRatioTransverseLongitudinal, shearModulusTransverse]"))
         , d_anisotropyDirection(initData(&d_anisotropyDirection, "anisotropyDirections", "the directions of anisotropy"))
         , numericalIntegrationOrder(initData(&numericalIntegrationOrder, (size_t)2, "integrationOrder", "The order of integration for numerical integration"))
         , d_integrationMethod(initData(&d_integrationMethod, std::string("analytical"), "integrationMethod", "\"analytical\" if closed form expression for affine element, \"numerical\" if numerical integration is chosen,  \"standard\" if standard integration is chosen"))
@@ -524,17 +531,23 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::FTCFTetrahedronHa
         tetrahedronHandler = new FTCFTetrahedronHandler(this, &tetrahedronInfo);
     }
 
-    template <class DataTypes> HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::~HighOrderTetrahedralCorotationalFEMForceField()
+
+template <class DataTypes>
+HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::~HighOrderTetrahedralCorotationalFEMForceField()
     {
         if (tetrahedronHandler) delete tetrahedronHandler;
     }
 
- template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::assembleAnisotropicTensors()
+
+template <class DataTypes>
+void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::assembleAnisotropicTensors()
  {
 
  }
 
-template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
+
+template <class DataTypes>
+void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::init()
 {
     //	serr << "initializing HighOrderTetrahedralCorotationalFEMForceField" << sendl;
     this->Inherited::init();
@@ -555,8 +568,11 @@ template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<Da
         elasticitySymmetry= CUBIC;
     else if (d_anisotropy.getValue() == "transverseIsotropic") 
         elasticitySymmetry= TRANSVERSE_ISOTROPIC;
-    else if (d_anisotropy.getValue() == "orthotropic") 
-        elasticitySymmetry= ORTHOTROPIC;
+    else if (d_anisotropy.getValue() == "orthotropic")
+    {
+        msg_warning() << "orthotropic elasticitySymmetry is not yet implemented";
+        //elasticitySymmetry= ORTHOTROPIC;
+    }
 	else
     {
         serr << "cannot recognize symmetry "<< d_anisotropy.getValue() << ". Must be either \"isotropic\" or \"cubic\"  or \"transverseIsotropic\" or \"orthotropic\"" << sendl;
@@ -591,7 +607,7 @@ template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<Da
 
     std::set<typename topology::NumericalIntegrationDescriptor<Real, 3>::QuadratureMethod> qmSet = highOrderTetraGeo->getTetrahedronNumericalIntegrationDescriptor().getQuadratureMethods();
     if (qmSet.count(numericalIntegrationMethod.getValue()) == 0) {
-        serr << "cannot recognize numerical integration method  " << numericalIntegrationMethod.getValue() << sendl;
+        serr << "cannot recognize numerical integration method  " << numericalIntegrationMethod.getValue() << qmSet<< sendl;
     }
 
 
@@ -621,8 +637,11 @@ template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<Da
 	sofa::helper::vector<topology::TetrahedronIndexVector> tbiArray;
 	tbiArray=highOrderTetraGeo->getTopologyContainer()->getTetrahedronIndexArray();
 
-	if (degree==1) 
-		integrationMethod= AFFINE_ELEMENT_INTEGRATION;
+    if (degree==1)
+    {
+        msg_warning() << "The order of your TopologyContainer is 1. With this order we force the integrationMethod to analytical";
+        integrationMethod= AFFINE_ELEMENT_INTEGRATION;
+    }
 
 	computeElasticityTensor();
 	if (degree>1) {
@@ -942,6 +961,9 @@ template <class DataTypes> void HighOrderTetrahedralCorotationalFEMForceField<Da
                 (const helper::vector< unsigned int > )0,
                 (const helper::vector< double >)0);
     }
+
+    //msg_info() << getStiffnessArray(0,&tetrahedronInf[0]);
+
 	helper::system::thread::ctime_t endComputeLocalStiffness=helper::system::thread::CTime::getTime();
 	if (this->f_printLog.getValue()) {
 		helper::system::thread::ctime_t endAssembly=helper::system::thread::CTime::getTime();
@@ -999,150 +1021,287 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::updateTopologyInf
     updateTopologyInfo=false;
     tetrahedronInfo.endEdit();
 }
+
+
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeElasticityTensor() 											
 {
 	const helper::vector<Real> & anisotropyParameter=d_anisotropyParameter.getValue();
 	const helper::vector<Coord> & anisotropyDirection=d_anisotropyDirection.getValue();
+
 	if (elasticitySymmetry==ISOTROPIC) {
-			// elasticity tensor in isotropic case
-		Real lambda=getLambda();
-		Real mu=getMu();
-		elasticityTensor(0,0)=2*mu+lambda;elasticityTensor(1,1)=2*mu+lambda;elasticityTensor(2,2)=2*mu+lambda;
+        // elasticity tensor in isotropic case
+        // lambda = E*v/(1-2*v)*(1+v)
+        // mu = E/(2*(1+v))
+        // with v == poissonRatio & E == youngModulus
+        Real lambda=getLambda();
+        Real mu=getMu();
+        //
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //                        | / | 0   | 1   | 2   | 3        | 4        | 5        |
+        //                        +===+=====+=====+=====+==========+==========+==========+
+        //                        | 0 | 1-v | v   | v   | 0        | 0        | 0        |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //                        | 1 | v   | 1-v | v   | 0        | 0        | 0        |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //  E/(1+v)(1-2v) *       | 2 | v   | v   | 1-v | 0        | 0        | 0        |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //                        | 3 | 0   | 0   | 0   | (1-2v)/2 | 0        | 0        |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //                        | 4 | 0   | 0   | 0   | 0        | (1-2v)/2 | 0        |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //                        | 5 | 0   | 0   | 0   | 0        | 0        | (1-2v)/2 |
+        //                        +---+-----+-----+-----+----------+----------+----------+
+        //
+        //     ==
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | / | 0           | 1           | 2           | 3  | 4  | 5  |
+        //                        +===+=============+=============+=============+====+====+====+
+        //                        | 0 | 2*mu+lambda | lambda      | lambda      | 0  | 0  | 0  |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | 1 | lambda      | 2*mu+lambda | lambda      | 0  | 0  | 0  |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | 2 | lambda      | lambda      | 2*mu+lambda | 0  | 0  | 0  |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | 3 | 0           | 0           | 0           | mu | 0  | 0  |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | 4 | 0           | 0           | 0           | 0  | mu | 0  |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+        //                        | 5 | 0           | 0           | 0           | 0  | 0  | mu |
+        //                        +---+-------------+-------------+-------------+----+----+----+
+
+        elasticityTensor(0,0)=2*mu+lambda;
+        elasticityTensor(1,1)=2*mu+lambda;
+        elasticityTensor(2,2)=2*mu+lambda;
+        elasticityTensor(3,3)=mu;
+        elasticityTensor(4,4)=mu;
+        elasticityTensor(5,5)=mu;
+
 		elasticityTensor(0,1)=lambda;elasticityTensor(0,2)=lambda;elasticityTensor(1,2)=lambda;
 		elasticityTensor(1,0)=lambda;elasticityTensor(2,0)=lambda;elasticityTensor(2,1)=lambda;
-		elasticityTensor(3,3)=mu;elasticityTensor(4,4)=mu;elasticityTensor(5,5)=mu;
-	} else if (elasticitySymmetry==CUBIC) {
-		assert(anisotropyParameter.size()>=1);
-		assert(anisotropyDirection.size()>=1);
-		// get 3 orthogonal direction starting from the direction of anisotropy
-		Coord n=anisotropyDirection[0];
-		
-		n/=n.norm();
-		Coord v1,v2;
-		if ((n[0]!=0) || (n[1]!=0)) {
-			v1=Coord(-n[1],n[0],n[2]);
-		} else {
-			v1=Coord(1,0,0);
-		}
-		v1=cross(n,v1);
-		v1/=v1.norm();
-		v2=cross(v1,n);
 
-		// build the orthogonal matrices
-		Mat3x3 Nd;
-		Nd.identity();
-		Nd/= sqrt(3.0f);
-		Mat3x3 Ne=(2*dyad(n,n)-dyad(v1,v1)-dyad(v2,v2))/sqrt(6.0f);
-		Mat3x3 Np=(dyad(v1,v1)-dyad(v2,v2))/sqrt(2.0f);
-		Mat3x3 Ns1=(dyad(v2,n)+dyad(n,v2))/sqrt(2.0f);
-		Mat3x3 Ns2=(dyad(v1,n)+dyad(n,v1))/sqrt(2.0f);
-		Mat3x3 Ns3=(dyad(v1,v2)+dyad(v2,v1))/sqrt(2.0f);
-		// get the constants from the young modulus, Poisson ratio and anisotropy ratio.
-		Real youngModulus=d_youngModulus.getValue();
-		Real poissonRatio=d_poissonRatio.getValue();
-		Real anisotropyRatio=anisotropyParameter[0];
-		// use equations from http://solidmechanics.org/text/Chapter3_2/Chapter3_2.htm
-		Real c11,c12;
-		c11=youngModulus*(1-poissonRatio)/(1-poissonRatio-poissonRatio*poissonRatio);
-		c12=youngModulus*poissonRatio/(1-poissonRatio-poissonRatio*poissonRatio);
-		Real c44=anisotropyRatio*(c11-c12)/2;
-		// push all symmetric matrices and the eigenvalues
-		anisotropyMatrixArray.push_back(Nd);
-		anisotropyScalarArray.push_back(c11+2*c12);
-		anisotropyMatrixArray.push_back(Ne);
-		anisotropyScalarArray.push_back(c11-c12);
-		anisotropyMatrixArray.push_back(Np);
-		anisotropyScalarArray.push_back(c11-c12);
-		anisotropyMatrixArray.push_back(Ns1);
-		anisotropyScalarArray.push_back(c44);
-		anisotropyMatrixArray.push_back(Ns2);
-		anisotropyScalarArray.push_back(c44);
-		anisotropyMatrixArray.push_back(Ns3);
-		anisotropyScalarArray.push_back(c44);
-	} else if (elasticitySymmetry==TRANSVERSE_ISOTROPIC) {
-		assert(anisotropyParameter.size()>=1);
-		assert(anisotropyDirection.size()>=1);
-		// get 3 orthogonal direction starting from the direction of anisotropy
-		Coord n=anisotropyDirection[0];
+        //msg_info() << "C11 "<< elasticityTensor(0,0);
+        //msg_info() << "C12 "<< elasticityTensor(1,0);
+        //msg_info() << "C44 "<< elasticityTensor(4,4);
 
-			n/=n.norm();
-		Coord v1,v2;
-		if ((n[0]!=0) || (n[1]!=0)) {
-			v1=Coord(-n[1],n[0],n[2]);
-		} else {
-			v1=Coord(1,0,0);
-		}
-		v1=cross(n,v1);
-		v1/=v1.norm();
-		v2=cross(v1,n);
+    }
+    else
+    {
+        assert(anisotropyParameter.size()>=1);
+        assert(anisotropyDirection.size()>=1);
+        // get 3 orthogonal direction starting from the direction of anisotropy
+        Coord n=anisotropyDirection[0];
 
-		// get the constants from the young modulus, Poisson ratio and anisotropy ratio.
-		Real youngModulusTransverse=d_youngModulus.getValue();
-		Real poissonRatioTransverse=d_poissonRatio.getValue();
-		Real youngModulusLongitudinal=anisotropyParameter[0];
-		Real poissonRatioTransverseLongitudinal=anisotropyParameter[1];
-		Real shearModulusTransverse=anisotropyParameter[2];
-		// use equations from http://solidmechanics.org/text/Chapter3_2/Chapter3_2.htm
-		Real poissonRatioLongitudinalTransverse=poissonRatioTransverseLongitudinal*youngModulusLongitudinal/youngModulusTransverse;
-		Real gamma=1/(1-poissonRatioTransverse*poissonRatioTransverse-2*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal-2*poissonRatioTransverse*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
-		
-		Real c11=youngModulusTransverse*gamma*(1-poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
-		Real c33=youngModulusLongitudinal*gamma*(1-poissonRatioTransverse*poissonRatioTransverse);
-		Real c12=youngModulusTransverse*gamma*(poissonRatioTransverse+poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
-		Real c13=youngModulusTransverse*gamma*(poissonRatioLongitudinalTransverse+poissonRatioTransverse*poissonRatioTransverseLongitudinal);
-		Real c66=youngModulusTransverse/(2*(1+poissonRatioTransverse));
-		Real c44=shearModulusTransverse;
+            n/=n.norm();
+        Coord v1,v2;
+        if ((n[0]!=0) || (n[1]!=0)) {
+            v1=Coord(-n[1],n[0],n[2]);
+        } else {
+            v1=Coord(1,0,0);
+        }
+        v1=cross(n,v1);
+        v1/=v1.norm();
+        v2=cross(v1,n);
 
-		Real talpha=sqrt(2.0f)*(c11+c12-c33)/(4*c13);
-		Real alpha=atan(talpha);
-		Real salpha=sin(alpha); 
-		Real calpha=cos(alpha);
-		Real secalpha=1/calpha;
+        // Here we will use the work of Sandrine Germian see thesis (2015): https://opus4.kobv.de/opus4-fau/frontdoor/index/index/docId/3490
+        // Chap 4 Spectral decomposition and the Kelvin modes :
+        //
+        // - For CUBIC                  -------> 4.4.1 The cubic crystal system Materials (p38)
+        //
+        // - For TRANSVERSE_ISOTROPIC   -------> 4.4.6 The tetragonal crystal system Materials (p48)
+        //
+        // As well as the equations from http://solidmechanics.org/text/Chapter3_2/Chapter3_2.htm
 
-		Real eigen1=c33+M_SQRT2*c13*(talpha+secalpha);
-		Real eigen2=c11-c12; 
-		Real eigen3=c33+M_SQRT2*c13*(talpha-secalpha);
-		Real eigen4=shearModulusTransverse; 
 
-		// build the orthogonal matrices
-		
-		Mat3x3 tmp;
-		Real val1=(0.5*(1+salpha)+sqrt(2.0)*calpha/4.0f); 
-		Real val2=(0.5*(1-salpha)+sqrt(2.0)*calpha/2.0f); 
-		Mat3x3 Nh1=val1*(dyad(v1,v1)+dyad(v2,v2))+val2*dyad(n,n);
-		Nh1/=sqrt(2*val1*val1+val2*val2);
-		val1=(0.5*(1-salpha)-sqrt(2.0)*calpha/4.0f); 
-		val2=(0.5*(1+salpha)-sqrt(2.0)*calpha/2.0f); 
-		Mat3x3 Nh2=val1*(dyad(v1,v1)+dyad(v2,v2))+val2*dyad(n,n);
-		Nh2/=sqrt(2*val1*val1+val2*val2);
+        if (elasticitySymmetry==CUBIC) {
 
-		Mat3x3 Np=(dyad(v1,v1)-dyad(v2,v2))/sqrt(2.0f);
-		Mat3x3 Ns1=(dyad(v2,n)+dyad(n,v2))/sqrt(2.0f);
-		Mat3x3 Ns2=(dyad(v1,n)+dyad(n,v1))/sqrt(2.0f);
-		Mat3x3 Ns3=(dyad(v1,v2)+dyad(v2,v1))/sqrt(2.0f);
-	
-		
-		
-		// push all symmetric matrices and the eigenvalues
-		anisotropyMatrixArray.push_back(Nh1);
-		anisotropyScalarArray.push_back(eigen1);
-		anisotropyMatrixArray.push_back(Np);
-		anisotropyScalarArray.push_back(eigen2);
-		anisotropyMatrixArray.push_back(Ns3);
-		anisotropyScalarArray.push_back(eigen2);
-		anisotropyMatrixArray.push_back(Nh2);
-		anisotropyScalarArray.push_back(eigen3);
-		anisotropyMatrixArray.push_back(Ns1);
-		anisotropyScalarArray.push_back(eigen4);
-		anisotropyMatrixArray.push_back(Ns2);
-		anisotropyScalarArray.push_back(eigen4);
-	}
+            // get the different constants : young modulus, Poisson ratio and anisotropy ratio.
+            Real youngModulus=d_youngModulus.getValue();
+            Real poissonRatio=d_poissonRatio.getValue();
+            Real anisotropyRatio=anisotropyParameter[0];
+
+            // Same as the isotropic but with a coefficient of anysotropy (we will call A)
+            // if A == 1    --> the material is isotropic
+            // defined by the expression :
+            //
+            // mu = A * E/(2*(1+v))
+            //
+            //
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //                        | / | 0   | 1   | 2   | 3        | 4        | 5         |
+            //                        +===+=====+=====+=====+==========+==========+===========+
+            //                        | 0 | 1-v | v   | v   | 0        | 0        | 0         |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //                        | 1 | v   | 1-v | v   | 0        | 0        | 0         |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //  E/(1+v)(1-2v) *       | 2 | v   | v   | 1-v | 0        | 0        | 0         |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //                        | 3 | 0   | 0   | 0   | A(1-2v)/2 | 0        | 0        |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //                        | 4 | 0   | 0   | 0   | 0        | A(1-2v)/2 | 0        |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+            //                        | 5 | 0   | 0   | 0   | 0        | 0        | A(1-2v)/2 |
+            //                        +---+-----+-----+-----+----------+----------+-----------+
+
+            Real c11 = youngModulus * (1 - poissonRatio) / (1 - poissonRatio - 2 * poissonRatio * poissonRatio);
+            Real c12 = youngModulus * poissonRatio / (1 - poissonRatio - 2 * poissonRatio * poissonRatio);
+            Real c44 = anisotropyRatio * (c11 - c12) / 2;
+
+            // The number of modes is equal to three, so that the tensor has three eigenvalues:
+            Real eigen1 = c11 + 2 * c12;    // (4.39) dim 1
+            Real eigen2 = c11 - c12;        // (4.40) dim 2
+            Real eigen3 = 2 * c44;          // (4.41) dim 3
+
+            //msg_info() << "anisotropyRatio "<<anisotropyRatio ;
+            //msg_info() << "C11 "<< c11;
+            //msg_info() << "C12 "<< c12;
+            //msg_info() << "C44 (mu) "<< c44;
+
+            // ----------------------------------------------------------------------
+            // BUILD THE ORTHOGONAL MATRICES
+            // ----------------------------------------------------------------------
+
+            // The spectral decomposition of the cubic tensor consists of a dilatation,
+            // a two-dimensional and a three-dimensional eigenspace
+            //  (here 'x' is the dyadic product)
+
+            // The first projection tensor associated with the first eigenvalue depends on the dilatation mode as for the isotropic tensor
+            // P1 = Nd x Nd
+
+            Mat3x3 Nd;
+            Nd.identity();
+            Nd/= sqrt(3.0f);
+
+            // The second projection tensor associated with the second eigenvalue is the sum of the tensor product of the isochoric extension and pure shear modes with themselves
+            // P2 = Nei x Nei + Npi x Npi (with i == 1/2/3)
+
+            Mat3x3 Ne=(2*dyad(n,n)-dyad(v1,v1)-dyad(v2,v2))/sqrt(6.0f);
+            Mat3x3 Np=(dyad(v1,v1)-dyad(v2,v2))/sqrt(2.0f);
+
+            // The third projection tensor associated with the third eigenvalue is the sum of the tensor product of the three simple shear modes with themselves
+            // P3 = Ns1 x Ns1 + Ns2 x Ns2 + Ns3 x Ns3
+
+            Mat3x3 Ns1=(dyad(v2,n)+dyad(n,v2))/sqrt(2.0f);
+            Mat3x3 Ns2=(dyad(v1,n)+dyad(n,v1))/sqrt(2.0f);
+            Mat3x3 Ns3=(dyad(v1,v2)+dyad(v2,v1))/sqrt(2.0f);
+
+
+            // push all symmetric matrices and the eigenvalues
+            anisotropyMatrixArray.push_back(Nd);
+            anisotropyScalarArray.push_back(eigen1);
+            anisotropyMatrixArray.push_back(Ne);
+            anisotropyScalarArray.push_back(eigen2);
+            anisotropyMatrixArray.push_back(Np);
+            anisotropyScalarArray.push_back(eigen2);
+            anisotropyMatrixArray.push_back(Ns1);
+            anisotropyScalarArray.push_back(eigen3);
+            anisotropyMatrixArray.push_back(Ns2);
+            anisotropyScalarArray.push_back(eigen3);
+            anisotropyMatrixArray.push_back(Ns3);
+            anisotropyScalarArray.push_back(eigen3);
+        }
+        else if (elasticitySymmetry==TRANSVERSE_ISOTROPIC) {
+
+            // get the constants from the young modulus, Poisson ratio and anisotropy ratio.
+            Real youngModulusTransverse=d_youngModulus.getValue();
+            Real poissonRatioTransverse=d_poissonRatio.getValue();
+            Real youngModulusLongitudinal=anisotropyParameter[0];
+            Real poissonRatioTransverseLongitudinal=anisotropyParameter[1];
+            Real shearModulusTransverse=anisotropyParameter[2];
+
+            Real poissonRatioLongitudinalTransverse=poissonRatioTransverseLongitudinal*youngModulusLongitudinal/youngModulusTransverse;
+            Real gamma=1/(1-poissonRatioTransverse*poissonRatioTransverse-2*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal-2*poissonRatioTransverse*poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
+
+            Real c11=youngModulusTransverse*gamma*(1-poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
+            Real c33=youngModulusLongitudinal*gamma*(1-poissonRatioTransverse*poissonRatioTransverse);
+            Real c12=youngModulusTransverse*gamma*(poissonRatioTransverse+poissonRatioLongitudinalTransverse*poissonRatioTransverseLongitudinal);
+            Real c13=youngModulusTransverse*gamma*(poissonRatioLongitudinalTransverse+poissonRatioTransverse*poissonRatioTransverseLongitudinal);
+            Real c66=youngModulusTransverse/(2*(1+poissonRatioTransverse));
+            Real c44=shearModulusTransverse; // = c55
+
+            //msg_info() << "C11      "<< c11;
+            //msg_info() << "C12      "<< c12;
+            //msg_info() << "C33      "<< c33;
+            //msg_info() << "C44/C55  "<< c44;
+            //msg_info() << "C66      "<< c66;
+
+            // (4.119)
+            Real talpha=sqrt(2.0f)*(c11+c12-c33)/(4*c13);
+            Real alpha=atan(talpha);
+            Real salpha=sin(alpha);
+            Real calpha=cos(alpha);
+            Real secalpha=1/calpha;
+
+            // (4.118)
+            Real eigen1 = c33 + M_SQRT2 * c13 * (talpha + secalpha);
+            Real eigen2 = c11 - c12;
+            Real eigen3 = c33 + M_SQRT2 * c13 * (talpha - secalpha);
+            Real eigen4 = 2 * shearModulusTransverse;
+
+            // ----------------------------------------------------------------------
+            // BUILD THE ORTHOGONAL MATRICES
+            // ----------------------------------------------------------------------
+
+            // No dilatation/extension Kelvin modes ? Nd/Ne
+            // yes see p48 :
+            // because we represent the tetragonal tensor in the e3-direction
+            // The five projection tensors are expressed as functions of the typical Kelvin modes and two dilatation
+
+            // (4.120)
+            //P1 = Nh1 x Nh1
+            //P2 = Np3 x Np3 + Ns3 x Ns3
+            //P3 = Nh2 x Nh2
+            //P4 = Ns1 x Ns1 + Ns2 x Ns2
+
+            // ---------------------------------------------------------
+            // dilatation modes
+            // defined in Equation 4.121 & 4.122 (p51)
+            Real val1_Nh1 = 0.5*(1+salpha)+sqrt(2.0)*calpha/4.0f;
+            Real val2_Nh1 = 0.5*(1-salpha)+sqrt(2.0)*calpha/2.0f;
+            Real val1_Nh2 = 0.5*(1-salpha)-sqrt(2.0)*calpha/4.0f;
+            Real val2_Nh2 = 0.5*(1+salpha)-sqrt(2.0)*calpha/2.0f;
+
+            Mat3x3 Nh1 = val1_Nh1 * ( dyad(v1,v1) + dyad(v2,v2) ) + val2_Nh1 * dyad(n,n);
+            Mat3x3 Nh2 = val1_Nh2 * ( dyad(v1,v1) + dyad(v2,v2) ) + val2_Nh2 * dyad(n,n);
+
+            // normalization Nh1/Nh2
+            Nh1/=sqrt(2*val1_Nh1*val1_Nh1+val2_Nh1*val2_Nh1);
+            Nh2/=sqrt(2*val1_Nh2*val1_Nh2+val2_Nh2*val2_Nh2);
+
+            // ---------------------------------------------------------
+            // isochoric pure shear modes along e3
+            // defined in Equation 4.18 (p35)
+            Mat3x3 Np=(dyad(v1,v1)-dyad(v2,v2))/sqrt(2.0f);
+
+            // ---------------------------------------------------------
+            // The three isochoric simple shear modes along e1, e2, and e3
+            // defined in Equation 4.19, Equation 4.20, and Equation 4.21, respectively (p35)
+            Mat3x3 Ns1=(dyad(v2,n)+dyad(n,v2))/sqrt(2.0f);
+            Mat3x3 Ns2=(dyad(v1,n)+dyad(n,v1))/sqrt(2.0f);
+            Mat3x3 Ns3=(dyad(v1,v2)+dyad(v2,v1))/sqrt(2.0f);
+
+
+
+            // push all symmetric matrices and the eigenvalues
+            anisotropyMatrixArray.push_back(Nh1);
+            anisotropyScalarArray.push_back(eigen1);
+            anisotropyMatrixArray.push_back(Np);
+            anisotropyScalarArray.push_back(eigen2);
+            anisotropyMatrixArray.push_back(Ns3);
+            anisotropyScalarArray.push_back(eigen2);
+            anisotropyMatrixArray.push_back(Nh2);
+            anisotropyScalarArray.push_back(eigen3);
+            anisotropyMatrixArray.push_back(Ns1);
+            anisotropyScalarArray.push_back(eigen4);
+            anisotropyMatrixArray.push_back(Ns2);
+            anisotropyScalarArray.push_back(eigen4);
+        }
+    }
 }
 
+
 template<class DataTypes>
-void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedronStiffnessEdgeMatrix(const Coord point[4],
-																								  Mat6x9 edgeStiffnessVectorized[2])
+void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedronStiffnessEdgeMatrix(const Coord point[4], Mat6x9 edgeStiffnessVectorized[2])
 {
 	helper::system::thread::ctime_t startComputeStiffness=helper::system::thread::CTime::getTime();
 
@@ -1151,7 +1310,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 	/// compute 6 times the rest volume
 	Real volume=dot(cross(point[1]-point[0],point[2]-point[0]),point[0]-point[3]);
 	/// store the rest volume
-//	my_tinfo.restVolume=volume/6;
+    // my_tinfo.restVolume=volume/6;
 
 	size_t j,k,l,m,n;
 	// store shape vectors at the rest configuration
@@ -1164,9 +1323,9 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 		
 	}
 	if (elasticitySymmetry==ISOTROPIC) {
-		Real mu=getMu()*fabs(volume)/6;
-		Real lambda=getLambda()*fabs(volume)/6;
-		Real val;
+        Real mu=getMu()*fabs(volume)/6;
+        Real lambda=getLambda()*fabs(volume)/6;
+        Real val;
 
 		/// compute the edge stiffness of the linear elastic material
 		for(j=0; j<6; ++j)
@@ -1180,7 +1339,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 				for(n=0; n<3; ++n)
 				{
 					edgeStiffness[j][m][n]=lambda*shapeVector[k][n]*shapeVector[l][m]+
-						mu*shapeVector[l][n]*shapeVector[k][m];
+                        mu*shapeVector[l][n]*shapeVector[k][m];
 
 					if (m==n)
 					{
@@ -1190,7 +1349,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 			}
 		}
 	} else {
-		size_t i;
+		size_t i;   
 		for(j=0; j<6; ++j)
 		{
 			k=edgesInTetrahedronArray[j][0];
@@ -1198,7 +1357,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 			// the linear stiffness matrix using shape vectors and Lame coefficients
 			Mat3x3 tmp=dyad(shapeVector[l],shapeVector[k]);
 			for(i=0;i<anisotropyScalarArray.size();++i) {
-				edgeStiffness[j]+=anisotropyScalarArray[i]*anisotropyMatrixArray[i]*tmp*anisotropyMatrixArray[i];
+                edgeStiffness[j]+=(anisotropyScalarArray[i]*anisotropyMatrixArray[i]*tmp*anisotropyMatrixArray[i])*fabs(volume)/6;
 			}
 		}
 	}
@@ -1222,9 +1381,9 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 	}
 }
 
+
 template<class DataTypes>
-void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedronStiffnessEdgeMatrix(const Coord point[4],
-																								  Mat3x3 edgeStiffness[6])
+void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedronStiffnessEdgeMatrix(const Coord point[4], Mat3x3 edgeStiffness[6])
 {
 	helper::system::thread::ctime_t startComputeStiffness=helper::system::thread::CTime::getTime();
 
@@ -1232,7 +1391,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 	/// compute 6 times the rest volume
 	Real volume=dot(cross(point[1]-point[0],point[2]-point[0]),point[0]-point[3]);
 	/// store the rest volume
-//	my_tinfo.restVolume=volume/6;
+    // my_tinfo.restVolume=volume/6;
 
 	size_t j,k,l,m,n;
 	// store shape vectors at the rest configuration
@@ -1247,6 +1406,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 	if (elasticitySymmetry==ISOTROPIC) {
 		Real mu=getMu()*fabs(volume)/6;
 		Real lambda=getLambda()*fabs(volume)/6;
+
 		Real val;
 
 		/// compute the edge stiffness of the linear elastic material
@@ -1263,7 +1423,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 					edgeStiffness[j][m][n]=lambda*shapeVector[k][n]*shapeVector[l][m]+
 						mu*shapeVector[l][n]*shapeVector[k][m];
 
-					if (m==n)
+                    if (m==n)
 					{
 						edgeStiffness[j][m][m]+=(Real)val;
 					}
@@ -1279,7 +1439,7 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 			// the linear stiffness matrix using shape vectors and Lame coefficients
 			Mat3x3 tmp=dyad(shapeVector[l],shapeVector[k]);
 			for(i=0;i<anisotropyScalarArray.size();++i) {
-				edgeStiffness[j]+=anisotropyScalarArray[i]*anisotropyMatrixArray[j]*tmp*anisotropyMatrixArray[j];
+                edgeStiffness[j]+=(anisotropyScalarArray[i]*anisotropyMatrixArray[j]*tmp*anisotropyMatrixArray[j])*fabs(volume)/6;
 			}
 		}
 	}
@@ -1289,6 +1449,8 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeTetrahedro
 	}
 
 }
+
+
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeQRRotation( Mat3x3 &r, const Coord *dp)
 {
@@ -1318,27 +1480,30 @@ void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::computeQRRotation
     r[2][2] = edgez[2];
 }
 
+
 template <class DataTypes>
-const helper::vector<typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::Mat3x3> & 
-	HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::getStiffnessArray(
-	const size_t i,
-	typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronRestInformation *restTetra)
+const helper::vector<typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::Mat3x3> &
+    HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::getStiffnessArray(
+    const size_t i,
+    typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronRestInformation *restTetra)
 {
-	return(restTetra->stiffnessVector);
+    return(restTetra->stiffnessVector);
 }
+
 template <class DataTypes>
-const  helper::vector<typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::Mat3x3> & 
-	HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::getRotatedStiffnessArray(
-	const size_t i,
-	const typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronRestInformation *restTetra)
+const  helper::vector<typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::Mat3x3> &
+    HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::getRotatedStiffnessArray(
+    const size_t i,
+    const typename HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::TetrahedronRestInformation *restTetra)
 {
 
-	if (decompositionMethod==LINEAR_ELASTIC)
-	{
-		return(restTetra->stiffnessVector);
-	} else
-		return(restTetra->rotatedStiffnessVector);
+    if (decompositionMethod==LINEAR_ELASTIC)
+    {
+        return(restTetra->stiffnessVector);
+    } else
+        return(restTetra->rotatedStiffnessVector);
 }
+
 template <class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::addForce(const sofa::core::MechanicalParams* mparams /* PARAMS FIRST */, 
 																	 DataVecDeriv &  dataF, const DataVecCoord &  dataX , const DataVecDeriv & /*dataV*/ )
@@ -1664,8 +1829,8 @@ SReal HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::getPotentialEner
 template<class DataTypes>
 void HighOrderTetrahedralCorotationalFEMForceField<DataTypes>::updateLameCoefficients()
 {
-    lambda= d_youngModulus.getValue()*d_poissonRatio.getValue()/((1-2*d_poissonRatio.getValue())*(1+d_poissonRatio.getValue()));
-    mu = d_youngModulus.getValue()/(2*(1+d_poissonRatio.getValue()));
+    lambda= d_youngModulus.getValue()*d_poissonRatio.getValue()/((1-2*d_poissonRatio.getValue())*(1+d_poissonRatio.getValue())); // E*v/(1-2*v)*(1+v)
+    mu = d_youngModulus.getValue()/(2*(1+d_poissonRatio.getValue())); // E/(2*(1+v))
 
 }
 
